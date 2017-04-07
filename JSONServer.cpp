@@ -6,6 +6,11 @@ http://www.binarii.com/files/papers/c_sockets.txt
  */
 
 #include <sys/types.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <string.h>
+#include <termios.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -17,7 +22,16 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <iostream>
 using namespace std;
 
-int start_server(int PORT_NUMBER)
+
+void configure(int fd) {
+  struct  termios pts;
+  tcgetattr(fd, &pts);
+  cfsetospeed(&pts, 9600);   
+  cfsetispeed(&pts, 9600);   
+  tcsetattr(fd, TCSANOW, &pts);
+}
+
+int start_server(int PORT_NUMBER, string reply)
 {
 
       // structs to represent the server and client
@@ -27,13 +41,13 @@ int start_server(int PORT_NUMBER)
 
       // 1. socket: creates a socket descriptor that you later use to make other system calls
       if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	perror("Socket");
-	exit(1);
+        	perror("Socket");
+        	exit(1);
       }
       int temp;
       if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&temp,sizeof(int)) == -1) {
-	perror("Setsockopt");
-	exit(1);
+        	perror("Setsockopt");
+        	exit(1);
       }
 
       // configure the server
@@ -44,14 +58,14 @@ int start_server(int PORT_NUMBER)
       
       // 2. bind: use the socket and associate it with the port number
       if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1) {
-	perror("Unable to bind");
-	exit(1);
+        	perror("Unable to bind");
+        	exit(1);
       }
 
       // 3. listen: indicates that we want to listn to the port to which we bound; second arg is number of allowed connections
       if (listen(sock, 5) == -1) {
-	perror("Listen");
-	exit(1);
+        	perror("Listen");
+        	exit(1);
       }
           
       // once you get here, the server is set up and about to start listening
@@ -82,7 +96,7 @@ int start_server(int PORT_NUMBER)
            "name": "cit595"
         }
       */
-      string reply = "{\n\"name\": \"cit595\"\n}\n";
+      // string reply = "{\n\"name\": \"cit595\"\n}\n";
       
       // 6. send: send the message over the socket
       // note that the second argument is a char*, and the third is the number of chars
@@ -104,11 +118,28 @@ int main(int argc, char *argv[])
   // check the number of arguments
   if (argc != 2)
     {
-      cout << endl << "Usage: server [port_number]" << endl;
+      cout << endl << "Usage: server [port_number], Name of the serial port (USB) device file " << endl;
       exit(0);
     }
 
+  // char* file_name = argv[2]; 
+  
+  // int fd = open(argv[2], O_RDWR | O_NOCTTY | O_NDELAY);
+  
+  // if (fd < 0) {
+  //   perror("Could not open file");
+  //   exit(1);
+  // }
+  // else {
+  //   cout << "Successfully opened " << argv[2] << " for reading/writing" << endl;
+  // }
+
+  // configure(fd);
+
+  string correct_temp;
+  correct_temp = "{\n\"name\": \"cit595\"\n}\n"; 
+
   int PORT_NUMBER = atoi(argv[1]);
-  start_server(PORT_NUMBER);
+  start_server(PORT_NUMBER, correct_temp);
 }
 
