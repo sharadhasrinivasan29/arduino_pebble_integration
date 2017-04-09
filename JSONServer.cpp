@@ -101,7 +101,7 @@ int start_server(int PORT_NUMBER, string reply)
       // 6. send: send the message over the socket
       // note that the second argument is a char*, and the third is the number of chars
       send(fd, reply.c_str(), reply.length(), 0);
-      //printf("Server sent message: %s\n", reply);
+      printf("Server sent message: %s\n", reply.c_str());
 
       // 7. close: close the socket connection
       close(fd);
@@ -113,33 +113,66 @@ int start_server(int PORT_NUMBER, string reply)
 
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
   // check the number of arguments
-  if (argc != 2)
+  if (argc != 3)
     {
       cout << endl << "Usage: server [port_number], Name of the serial port (USB) device file " << endl;
       exit(0);
     }
 
-  // char* file_name = argv[2]; 
+  char* file_name = argv[2]; 
+  int PORT_NUMBER = atoi(argv[1]);
   
-  // int fd = open(argv[2], O_RDWR | O_NOCTTY | O_NDELAY);
+  int fd = open(argv[2], O_RDWR | O_NOCTTY | O_NDELAY);
   
-  // if (fd < 0) {
-  //   perror("Could not open file");
-  //   exit(1);
-  // }
-  // else {
-  //   cout << "Successfully opened " << argv[2] << " for reading/writing" << endl;
-  // }
+  if (fd < 0) {
+    perror("Could not open file");
+    exit(1);
+  }
+  else {
+    cout << "Successfully opened " << argv[2] << " for reading/writing" << endl;
+  }
 
-  // configure(fd);
+  configure(fd);
 
   string correct_temp;
-  correct_temp = "{\n\"name\": \"cit595\"\n}\n"; 
+  int i = 0;
 
-  int PORT_NUMBER = atoi(argv[1]);
-  start_server(PORT_NUMBER, correct_temp);
+    char buff[100];
+    int bytes_read = read(fd, buff, 100);
+
+    if(bytes_read < 0) {
+
+    }
+    else {
+      for(i = 0; i < bytes_read; i++) {
+        correct_temp += buff[i] ;
+      }
+    }
+
+    string just_temp;
+    int temp_count = 0;
+    
+    for(int i = 0; i < correct_temp.size(); i++) {
+      if(isdigit(correct_temp[i])||ispunct(correct_temp[i])) {
+        just_temp += correct_temp[i];
+        temp_count++;
+        if(temp_count == 6) {
+          break;
+        } 
+      }
+    }
+
+    cout << just_temp << endl;
+
+    string temp_print = "Temperature : ";
+
+    string temp = "{\n\"name\": \"" + temp_print + just_temp +"\0" + "\"\n}\n";
+
+    cout << temp << endl;
+    
+    start_server(PORT_NUMBER, temp);
 }
+
 
