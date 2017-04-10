@@ -31,7 +31,7 @@ void configure(int fd) {
   tcsetattr(fd, TCSANOW, &pts);
 }
 
-int start_server(int PORT_NUMBER, string reply, int flag)
+int start_server(int PORT_NUMBER, string reply)
 {
 
       // structs to represent the server and client
@@ -100,15 +100,8 @@ int start_server(int PORT_NUMBER, string reply, int flag)
       
       // 6. send: send the message over the socket
       // note that the second argument is a char*, and the third is the number of chars
-      if(flag == 0) {
-        send(fd, reply.c_str(), reply.length(), 0);
-        printf("Server sent message: %s\n", reply.c_str());
-      }
-      else {
-        string no_reply = " ";
-        send(fd, no_reply.c_str(), no_reply.length(), 0);
-        printf("Server sent message: %s\n", reply.c_str());
-      }
+      send(fd, reply.c_str(), reply.length(), 0);
+      printf("Server sent message: %s\n", reply.c_str());
 
       // 7. close: close the socket connection
       close(fd);
@@ -178,9 +171,8 @@ int main(int argc, char *argv[]){
     string temp = "{\n\"name\": \"" + temp_print + just_temp +"\0" + "\"\n}\n";
 
     cout << temp << endl;
-    int fl = 0;
-
-    start_server(PORT_NUMBER, temp, fl);
+    
+    start_server(PORT_NUMBER, temp);
 }
 
 
