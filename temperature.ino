@@ -41,6 +41,7 @@ void Dis_7SEG (int, byte, byte, bool);
 void Send7SEG (byte, byte);
 void SerialMonitorPrint (byte, int, bool);
 void UpdateRGB (byte);
+char incomingByte;
 
 /***************************************************************************
  Function Name: setup
@@ -55,9 +56,26 @@ void setup()
   Wire.begin();        /* Join I2C bus */
   pinMode(RED, OUTPUT);    
   pinMode(GREEN, OUTPUT);  
-  pinMode(BLUE, OUTPUT);   
+  pinMode(BLUE, OUTPUT); 
+  pinMode(LED_BUILTIN, OUTPUT);  
   delay(500);          /* Allow system to stabilize */
 } 
+
+//void blinkFunction() {
+//  while(1) {
+//    if(Serial.available()>0) {
+//      int incomingByte = Serial.read();
+//      if(incomingByte == 11) {
+//        digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+//        delay(1000);                       // wait for a second
+//        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+//        delay(1000);                       // wait for a second
+//      }
+//    }
+//  }
+//}
+
+
 
 /***************************************************************************
  Function Name: loop
@@ -74,7 +92,7 @@ void loop()
   
   /* Configure 7-Segment to 12mA segment output current, Dynamic mode, 
      and Digits 1, 2, 3 AND 4 are NOT blanked */
-     
+  
   Wire.beginTransmission(_7SEG);   
   byte val = 0; 
   Wire.write(val);
@@ -132,6 +150,21 @@ void loop()
     
     delay (1000);        /* Take temperature read every 1 second */
   }
+
+//  if(Serial.available() > 0) {
+//    incomingByte = Serial.read();
+//    Serial.print("Incoming key");
+//    if(incomingByte == '1') {
+//      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+//      delay(1000);                       // wait for a second
+//      digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+//      delay(1000);
+//    }
+//  }
+//  else {
+//    Serial.print("Nothing");
+//  }
+//  Serial.flush();
 } 
 
 /***************************************************************************
@@ -209,16 +242,20 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
     Digit--;
   }
 
-  if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
+  if(incomingByte == '1') {
+    if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
   {
     Send7SEG (Digit,0x58);
     Digit--;
+    }
   }
   
+
   if (Digit > 0)                 /* Clear the rest of the digit */
   {
     Send7SEG (Digit,0x00);    
-  }  
+  } 
+   
 }
 
 /***************************************************************************
