@@ -41,7 +41,7 @@ void Dis_7SEG (int, byte, byte, bool);
 void Send7SEG (byte, byte);
 void SerialMonitorPrint (byte, int, bool);
 void UpdateRGB (byte);
-char incomingByte;
+int incomingByte;
 
 /***************************************************************************
  Function Name: setup
@@ -144,6 +144,13 @@ void loop()
     
     /* Update RGB LED.*/
     UpdateRGB (Temperature_H);
+
+    Serial.print("Before read in if");
+    if (Serial.available() > 0) {
+      incomingByte = Serial.read();
+      Serial.print(incomingByte, DEC);
+      Serial.print("in if");
+    }
     
     /* Display temperature on the 7-Segment */
     Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive);
@@ -151,6 +158,7 @@ void loop()
     delay (1000);        /* Take temperature read every 1 second */
   }
 
+ 
 //  if(Serial.available() > 0) {
 //    incomingByte = Serial.read();
 //    Serial.print("Incoming key");
@@ -242,7 +250,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign)
     Digit--;
   }
 
-  if(incomingByte == '1') {
+  if(incomingByte == 49) {
     if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
   {
     Send7SEG (Digit,0x58);
