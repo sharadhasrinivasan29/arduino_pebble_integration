@@ -61,22 +61,6 @@ void setup()
   delay(500);          /* Allow system to stabilize */
 } 
 
-//void blinkFunction() {
-//  while(1) {
-//    if(Serial.available()>0) {
-//      int incomingByte = Serial.read();
-//      if(incomingByte == 11) {
-//        digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-//        delay(1000);                       // wait for a second
-//        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-//        delay(1000);                       // wait for a second
-//      }
-//    }
-//  }
-//}
-
-
-
 /***************************************************************************
  Function Name: loop
 
@@ -145,11 +129,11 @@ void loop()
     /* Update RGB LED.*/
     UpdateRGB (Temperature_H);
 
-    Serial.print("Before read in if");
+//     Serial.print("Before read in if");
     if (Serial.available() > 0) {
       incomingByte = Serial.read();
-      Serial.print(incomingByte, DEC);
-      Serial.print("in if");
+//       Serial.print(incomingByte, DEC);
+//       Serial.print("in if");
     }
     
     /* Display temperature on the 7-Segment */
@@ -157,22 +141,6 @@ void loop()
     
     delay (1000);        /* Take temperature read every 1 second */
   }
-
- 
-//  if(Serial.available() > 0) {
-//    incomingByte = Serial.read();
-//    Serial.print("Incoming key");
-//    if(incomingByte == '1') {
-//      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-//      delay(1000);                       // wait for a second
-//      digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-//      delay(1000);
-//    }
-//  }
-//  else {
-//    Serial.print("Nothing");
-//  }
-//  Serial.flush();
 } 
 
 /***************************************************************************
