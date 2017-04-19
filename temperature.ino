@@ -37,6 +37,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   0x77,0x7C,0x39,0x5E,0x79,0x71};
   
   /* Function prototypes */
+  void convert_c_to_f (int&, byte&, bool&, int, byte, bool&);
   void Cal_temp (int&, byte&, byte&, bool&);
   void Dis_7SEG (int, byte, byte, bool);
   void Send7SEG (byte, byte);
