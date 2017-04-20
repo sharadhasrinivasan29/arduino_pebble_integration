@@ -41,7 +41,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   void Cal_temp (int&, byte&, byte&, bool&);
   void Dis_7SEG (int, byte, byte, bool);
   void Send7SEG (byte, byte);
-  void SerialMonitorPrint (byte, int, bool);
+  void SerialMonitorPrint (byte, int, bool, bool);
   void UpdateRGB (byte);
   int incomingByte;
 
@@ -74,13 +74,13 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   {
     //  String msg = ""; // DC
     int Decimal;
-    //  int timeInterval = 1000; // DC
     byte Temperature_H, Temperature_L, counter, counter2;
     bool IsPositive;
     bool stop = 0;
 
     // DC temperature conversion
-    bool celsius = true; // DC
+    //    bool celsius = true; // DC
+    bool celsius = false; // TODO: DELETE THIS AND UNCOMMENT PREVIOUS LINE
     bool standby = false;
     bool f_IsPositive = 0;
     int f_decimal = 0;
@@ -139,7 +139,12 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       /* Display temperature on the serial monitor.
       Comment out this line if you don't use serial monitor.*/
       if (stop == 0) {
-        SerialMonitorPrint (Temperature_H, Decimal, IsPositive);
+        if (celsius == true) {
+          SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
+        }
+        else {
+          SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
+        }
       }
 
       /* Update RGB LED.*/
@@ -354,7 +359,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   Purpose:
   Print current read temperature to the serial monitor.
   ****************************************************************************/
-  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive)
+  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
   {
     Serial.print("The temperature is ");
     if (!IsPositive)
@@ -364,6 +369,11 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     Serial.print(Temperature_H, DEC);
     Serial.print(".");
     Serial.print(Decimal, DEC);
-    Serial.print(" degrees C");
+    if (isCelsius == true) {
+      Serial.print(" degrees C");
+    }
+    else {
+      Serial.print(" degrees F");
+    }
     Serial.print("\n\n");
   }
