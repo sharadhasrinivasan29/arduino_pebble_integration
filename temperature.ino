@@ -229,11 +229,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       }
 
       else if (celsius == true) { // DC : display in C
-        Serial.print(Decimal + '\n');
         Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
       } else { // DC: display in F
-        // convert_c_to_f(f_decimal, f_temperature_H, f_IsPositive, Decimal, Temperature_H, IsPositive);
-        Serial.print(f_decimal + '\n');
         Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
       }
 
