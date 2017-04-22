@@ -149,7 +149,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       } else {
         j = 3600;
       }
-      Serial.println(j);
       // compute statistics
       max_temp_h = INT_MIN;
       max_temp_dec = INT_MIN;
@@ -446,5 +445,4 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       Serial.print(" degrees F.");
     }
     Serial.print("\n\n");
-
   }
