@@ -1,21 +1,15 @@
 /***************************************************************************
-
 Copyright 2008 Gravitech
 All Rights Reserved
-
 ****************************************************************************/
 
 /***************************************************************************
 File Name: I2C_7SEG_Temperature.pde
-
 Hardware: Arduino Diecimila with 7-SEG Shield
-
 Description:
 This program reads I2C data from digital thermometer and display it on 7-Segment
-
 Change History:
 03 February 2008, Gravitech - Created
-
 ****************************************************************************/
 
 #include <Wire.h>
@@ -48,7 +42,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: setup
-
   Purpose:
   Initialize hardwares.
   ****************************************************************************/
@@ -66,7 +59,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: loop
-
   Purpose:
   Run-time forever loop.
   ****************************************************************************/
@@ -80,8 +72,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     bool stop = 0;
 
     // DC temperature conversion
-    //        bool celsius = true; // DC
-    bool celsius = false; // TODO: DELETE THIS AND UNCOMMENT PREVIOUS LINE
+    bool celsius = true;
     bool standby = false;
     bool f_IsPositive = 0;
     int f_decimal = 0;
@@ -90,11 +81,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
     // DC storing temperature data
     int array_index = 0;
-    int temperature_data[3600][2];
-    int max_Decimal, min_Decimal, avg_Decimal;
-    byte max_Temperature_H, max_Temperature_L;
-    byte min_Temperature_H, min_Temperature_L;
-    byte avg_Temperature_H, avg_Temperature_L;
+    double temperature_data[3600];
+    double max_temp, min_temp, avg_temp;
 
 
     /* Configure 7-Segment to 12mA segment output current, Dynamic mode,
@@ -147,9 +135,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       convert_c_to_f(f_decimal, f_temperature_H, f_IsPositive, Decimal, Temperature_H, IsPositive);
 
       // DC : recording temperature every second
+//      Serial.println(array_index);
       int index = array_index % 3600;
-      temperature_data[index][0] = (int) Temperature_H;
-      temperature_data[index][1] = Decimal;
+//      Serial.println(array_index);
+      temperature_data[index] = (int) Temperature_H + Decimal / 1000;
       // statistics
       int j = 0;
       // determine how long it's been
@@ -159,28 +148,36 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       } else {
         j = 3600;
       }
+      Serial.println(j);
       // compute statistics
-      min_Temperature_H = UCHAR_MAX;
-      min_Decimal = UCHAR_MAX;
-      max_Temperature_H = 0;
-      max_Decimal = 0;
-      for (int i = 0; i < j; i++) {
-        if (temperature_data[i][0] < min_Temperature_H && temperature_data[i][1] < min_Decimal) {
-          min_Temperature_H = temperature_data[i][0];
-          min_Decimal = temperature_data[i][1];
-        }
-        if (temperature_data[i][0] > max_Temperature_H && temperature_data[i][1] > max_Decimal) {
-          max_Temperature_H = temperature_data[i][0];
-          max_Decimal = temperature_data[i][1];
-        }
-        avg_Temperature_H += temperature_data[i][0];
-        avg_Decimal += temperature_data[i][1];
-      }
-      avg_Temperature_H = avg_Temperature_H / array_index;
-      avg_Decimal = avg_Decimal / array_index;
+      min_temp = 100;
+      max_temp = 0;
+      avg_temp = 0;
+//      for (int i = 0; i < j; i++) {
+//        if (temperature_data[i] < min_temp) {
+//          min_temp = temperature_data[i];
+//        }
+//        if (temperature_data[i] > max_temp) {
+//          max_temp = temperature_data[i];
+//        }
+//        avg_temp += temperature_data[i];
+//      }
+//      avg_temp = avg_temp / (array_index % 3600);
       // update index
       array_index++;
+      
       // TODO display stats
+      Serial.print("max : ");
+//      Serial.print(Temperature_H, DEC);
+      Serial.println(max_temp, DEC);
+      Serial.print("min : ");
+      Serial.println(min_temp, DEC);
+      Serial.print("avg : ");
+      Serial.println(avg_temp, DEC);
+//        Serial.print("max : " + max_temp);
+//        Serial.print("min : " + min_temp);
+//        Serial.print("avg : " + avg_temp);
+
 
       /* Display temperature on the serial monitor.
       Comment out this line if you don't use serial monitor.*/
@@ -189,7 +186,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
         }
         else {
-          Serial.print(f_decimal + '\n');
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
       }
@@ -200,17 +196,31 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       if (Serial.available() > 0) {
         // handle commands from server
         incomingByte = Serial.read();
-        if (incomingByte == 49) { // TODO : celsius
+        if (incomingByte == 49) {
           celsius = true;
+          Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+          SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
         }
         else if (incomingByte == 9990) { // TODO : temp f
-          celsius = false;
+          Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+          SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
+        }
+        else if (incomingByte == 9995) { // TODO : stats
+          //          SerialMonitorPrint(stats);
         }
         else if (incomingByte == 9991) { // TODO : standby
           standby = true;
+          for (counter = 1; counter <= 4; counter++) {
+            Send7SEG(counter,0x40); // print ----
+          }
+          Serial.print("--- standby ---");
         }
         else if (incomingByte == 9992) { // TODO : resume from standby
           standby = false;
+          celsius = true;
+          Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+          SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
+
         }
         else if (incomingByte == 9993) {
           // TODO : other features
@@ -222,13 +232,15 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       if (standby == true) {
         for (counter = 1; counter <= 4; counter++) {
           Send7SEG(counter,0x40); // print ----
+          //          Wire.endTransmission();
         }
-        Serial.print("---Standby---\n");
 
         delay(1000);
       }
 
-      else if (celsius == true) { // DC : display in C
+      if (celsius == true) { // DC : display in C
+//        Serial.print("\n average temperature : " + avg_Temperature_H);
+//        Serial.print("\n average temp Dec : " + avg_Decimal);
         Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
       } else { // DC: display in F
         Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
@@ -242,7 +254,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   /***************************************************************************
   Function Name: convert_c_to_f
   // DC
-
   Purpose:
   Calculate temperature from raw data.
   ****************************************************************************/
@@ -264,7 +275,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: Cal_temp
-
   Purpose:
   Calculate temperature from raw data.
   ****************************************************************************/
@@ -290,7 +300,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: Dis_7SEG
-
   Purpose:
   Display number on the 7-segment display.
   ****************************************************************************/
@@ -359,7 +368,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: Send7SEG
-
   Purpose:
   Send I2C commands to drive 7-segment display.
   ****************************************************************************/
@@ -374,7 +382,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: UpdateRGB
-
   Purpose:
   Update RGB LED according to define HOT and COLD temperature.
   ****************************************************************************/
@@ -401,7 +408,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   /***************************************************************************
   Function Name: SerialMonitorPrint
-
   Purpose:
   Print current read temperature to the serial monitor.
   ****************************************************************************/
