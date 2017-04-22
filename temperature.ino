@@ -83,7 +83,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     int array_index = 0;
     byte temperature_stats[3600][2];
     int max_temp_h, max_temp_dec, min_temp_h, min_temp_dec, avg_temp_h, avg_temp_dec;
-    
+
 
 
     /* Configure 7-Segment to 12mA segment output current, Dynamic mode,
@@ -150,14 +150,14 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         j = 3600;
       }
       Serial.println(j);
-      // compute statistics      
+      // compute statistics
       max_temp_h = INT_MIN;
       max_temp_dec = INT_MIN;
       min_temp_h = INT_MAX;
       min_temp_dec = INT_MAX;
       avg_temp_h = 0;
       avg_temp_dec = 0;
-      
+
       for (int i = 0; i < j; i++) {
         if (temperature_stats[i][0] < min_temp_h && temperature_stats[i][1] < min_temp_dec) {
           min_temp_h = temperature_stats[i][0];
@@ -179,22 +179,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
       // update index
       array_index++;
-      // TODO display stats
-      Serial.print("max : ");
-      Serial.print(max_temp_h, DEC);
-      Serial.print(".");
-      Serial.println(max_temp_dec, DEC);
-      
-      Serial.print("min : ");
-      Serial.print(min_temp_h, DEC);
-      Serial.print(".");
-      Serial.println(min_temp_dec, DEC);
-
-      Serial.print("avg : ");
-      Serial.print(avg_temp_h, DEC);
-      Serial.print(".");
-      Serial.println(avg_temp_dec, DEC);
-
 
       /* Display temperature on the serial monitor.
       Comment out this line if you don't use serial monitor.*/
@@ -223,7 +207,24 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
         else if (incomingByte == 9995) { // TODO : stats
-          //          SerialMonitorPrint(stats);
+          Serial.print("max : ");
+          Serial.print(max_temp_h, DEC);
+          Serial.print(".");
+          Serial.println(max_temp_dec, DEC);
+
+          Serial.print("min : ");
+          Serial.print(min_temp_h, DEC);
+          Serial.print(".");
+          Serial.println(min_temp_dec, DEC);
+
+          Serial.print("avg : ");
+          Serial.print(avg_temp_h, DEC);
+          Serial.print(".");
+          if (avg_temp_dec < 10) {
+            Serial.print(0, DEC);
+          }
+          Serial.println(avg_temp_dec, DEC);
+
         }
         else if (incomingByte == 9991) { // TODO : standby
           standby = true;
@@ -256,8 +257,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       }
 
       if (celsius == true) { // DC : display in C
-//        Serial.print("\n average temperature : " + avg_Temperature_H);
-//        Serial.print("\n average temp Dec : " + avg_Decimal);
+        //        Serial.print("\n average temperature : " + avg_Temperature_H);
+        //        Serial.print("\n average temp Dec : " + avg_Decimal);
         Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
       } else { // DC: display in F
         Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
