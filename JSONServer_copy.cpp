@@ -5,6 +5,11 @@ and
 http://www.binarii.com/files/papers/c_sockets.txt
  */
 
+
+/* TO DO:
+Handle middle ware issues
+Do q for quit
+*/
 #include <sys/types.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -22,7 +27,6 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <iostream>
 using namespace std;
 
-
 void configure(int fd) {
   struct  termios pts;
   tcgetattr(fd, &pts);
@@ -32,6 +36,7 @@ void configure(int fd) {
 }
 
 int fd1;
+string key;
 
 int start_server(int PORT_NUMBER, string reply, int flag)
 {
@@ -76,7 +81,6 @@ int start_server(int PORT_NUMBER, string reply, int flag)
      
       int keep_looping = 1;
       int count = 0;
-      char key;
 
       while(keep_looping == 1) {
         // 4. accept: wait here until we get a connection on that port
@@ -94,10 +98,11 @@ int start_server(int PORT_NUMBER, string reply, int flag)
         cout << "Here comes the message:" << endl;
         cout << request << endl;
 
-        char key;
-        key = request[5];
+        for(int i = 5; i < 7; i++) {
+          key += request[i];
+        }
+        // key = request[5] + request[6];
         cout << "Key is: " << key << endl << endl; 
-
 
         write(fd1,&key, 1);
         // char temp2[1];
@@ -140,65 +145,208 @@ int start_server(int PORT_NUMBER, string reply, int flag)
 
 int main(int argc, char *argv[]){
   // check the number of arguments
-  if (argc != 3)
+  if (argc != 2)
     {
       cout << endl << "Usage: server [port_number], Name of the serial port (USB) device file " << endl;
       exit(0);
     }
 
-  char* file_name = argv[2]; 
+  // char* file_name = argv[2]; 
   int PORT_NUMBER = atoi(argv[1]);
   
-  fd1 = open(argv[2], O_RDWR | O_NOCTTY | O_NDELAY);
+  // fd1 = open(argv[2], O_RDWR | O_NOCTTY | O_NDELAY);
 
-  if (fd1 < 0) {
-    perror("Could not open file");
-    exit(1);
-  }
-  else {
-    cout << "Successfully opened " << argv[2] << " for reading/writing" << endl;
-  }
+  // if (fd1 < 0) {
+  //   perror("Could not open file");
+  //   exit(1);
+  // }
+  // else {
+  //   cout << "Successfully opened " << argv[2] << " for reading/writing" << endl;
+  // }
 
-  configure(fd1);
+  // configure(fd1);
 
-  string correct_temp;
-  int i = 0;
+  //   char buff[100];
+  //   int bytes_read = read(fd1, buff, 100);
+  //   string temp;
 
-    char buff[100];
-    int bytes_read = read(fd1, buff, 100);
+  //   if(key == "01") {
+  //     //Farenheit
 
-    if(bytes_read < 0) {
+  //     string correct_temp;
+  //     int i = 0;
 
-    }
-    else {
-      for(i = 0; i < bytes_read; i++) {
-        correct_temp += buff[i] ;
-      }
-    }
+  //     if(bytes_read < 0) {
 
-    string just_temp;
-    int temp_count = 0;
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         correct_temp += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + correct_temp +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "02") {
+  //     //Celsius
+  //     string correct_temp;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         correct_temp += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + correct_temp +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "03") {
+  //     //avg temp over past hour
+  //     string avg_temp;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         avg_temp += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + avg_temp +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "04") {
+  //     //high temp
+
+  //     string high_temp;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         high_temp += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + high_temp +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "05") {
+  //     //low temp
+  //     string low_temp;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         low_temp += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + low_temp +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "06") {
+  //     //standby
+  //     string print = "Entering Standby Mode";
+  //     temp = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "07") {
+  //     //is temp rising or falling
+  //     string rising_falling;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         rising_falling += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + rising_falling +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "08") {
+  //     //print some word to 7SEG
+  //     string print = " ";
+  //     temp = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+  //   }
+  //   else if(key == "09") {
+  //     //click for green light/comfy temp
+  //     string print = "Perfect..Green light turning on!";
+  //     temp = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+  //   }
+  //   else if(key == "10") {
+  //     //click for blue light/too cold
+  //     string print = "Brrr..Blue light turning on!";
+  //     temp = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+  //   }
+  //   else if(key == "11") {
+  //     //click for red light/too hot
+  //     string print = "Ooff..Blue light turning on!";
+  //     temp = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+  //   }
+  //   else if(key == "12") {
+  //     //click for drink recommendation
+  //     string drink;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         drink += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + drink +"\0" + "\"\n}\n";
+  //   }
+
+  //   else if(key == "13") {
+  //     //standby
+  //     string print = "Exiting Standby Mode";
+  //     temp = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+  //   }
+
+  //   else{
+  //     //if pebble asks for just the current temperature
+  //     string correct_temp;
+  //     int i = 0;
+
+  //     if(bytes_read < 0) {
+
+  //     }
+  //     else {
+  //       for(i = 0; i < bytes_read; i++) {
+  //         correct_temp += buff[i] ;
+  //       }
+  //     }
+
+  //     temp = "{\n\"name\": \"" + correct_temp +"\0" + "\"\n}\n";
+  //   }
     
-    for(int i = 0; i < correct_temp.size(); i++) {
-      if(isdigit(correct_temp[i])||ispunct(correct_temp[i])) {
-        just_temp += correct_temp[i];
-        temp_count++;
-        if(temp_count == 6) {
-          break;
-        } 
-      }
-    }
-
-    cout << just_temp << endl;
-    string temp_print = "Temperature : ";
-    string temp = "{\n\"name\": \"" + temp_print + just_temp +"\0" + "\"\n}\n";
-
-    cout << temp << endl;
     int fl = 0;
 
-    int val = start_server(PORT_NUMBER, temp, fl);
+    // cout << temp << endl;
 
-    // write(fd, &key, 1);
+    string hi = "hello";
+    string hello = "{\n\"name\": \"" + hi +"\0" + "\"\n}\n";
+    int val = start_server(PORT_NUMBER, hello, fl);
 }
 
 
