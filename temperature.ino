@@ -83,6 +83,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     int array_index = 0;
     double temperature_data[3600];
     double max_temp, min_temp, avg_temp;
+    byte temperature_stats[3600][2];
+    byte max_temp_h, max_temp_dec, min_temp_h, min_temp_dec, avg_temp_h, avg_temp_dec;
+    
 
 
     /* Configure 7-Segment to 12mA segment output current, Dynamic mode,
@@ -137,8 +140,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       // DC : recording temperature every second
 //      Serial.println(array_index);
       int index = array_index % 3600;
-//      Serial.println(array_index);
-      temperature_data[index] = (int) Temperature_H + Decimal / 1000;
+      // populate array
+      temperature_stats[index][0] = Temperature_H;
+      temperature_stats[index][1] = Decimal;
       // statistics
       int j = 0;
       // determine how long it's been
@@ -153,30 +157,47 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       min_temp = 100;
       max_temp = 0;
       avg_temp = 0;
-//      for (int i = 0; i < j; i++) {
-//        if (temperature_data[i] < min_temp) {
-//          min_temp = temperature_data[i];
-//        }
-//        if (temperature_data[i] > max_temp) {
-//          max_temp = temperature_data[i];
-//        }
-//        avg_temp += temperature_data[i];
-//      }
-//      avg_temp = avg_temp / (array_index % 3600);
+      
+      max_temp_h = 0;
+      max_temp_dec = 0;
+      min_temp_h = 100;
+      min_temp_dec = 100;
+      avg_temp_h = 0;
+      avg_temp_dec = 0;
+      
+      for (int i = 0; i < j; i++) {
+        if (temperature_stats[i][0] < min_temp_h && temperature_stats[i][1] < min_temp_dec) {
+          min_temp_h = temperature_stats[i][0];
+          min_temp_dec = temperature_stats[i][1];
+        }
+        if (temperature_stats[i][0] > max_temp_h && temperature_stats[i][1] > max_temp_dec) {
+          max_temp_h = temperature_stats[i][0];
+          max_temp_dec = temperature_stats[i][1];
+        }
+        avg_temp_h += temperature_stats[i][0];
+        avg_temp_dec += temperature_stats[i][1];
+      }
+      avg_temp_h = (avg_temp_h / j);
+      avg_temp_dec = (avg_temp_dec / j);
+
       // update index
       array_index++;
       
       // TODO display stats
-      Serial.print("max : ");
-//      Serial.print(Temperature_H, DEC);
-      Serial.println(max_temp, DEC);
+      Serial.print(" max : ");
+      Serial.print(max_temp_h, DEC);
+      Serial.print(".");
+      Serial.println(max_temp_dec, DEC);
+      
       Serial.print("min : ");
-      Serial.println(min_temp, DEC);
+      Serial.print(min_temp_h, DEC);
+      Serial.print(".");
+      Serial.println(min_temp_dec, DEC);
+
       Serial.print("avg : ");
-      Serial.println(avg_temp, DEC);
-//        Serial.print("max : " + max_temp);
-//        Serial.print("min : " + min_temp);
-//        Serial.print("avg : " + avg_temp);
+      Serial.print(avg_temp_h, DEC);
+      Serial.print(".");
+      Serial.println(avg_temp_dec, DEC);
 
 
       /* Display temperature on the serial monitor.
