@@ -81,10 +81,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
     // DC storing temperature data
     int array_index = 0;
-    double temperature_data[3600];
-    double max_temp, min_temp, avg_temp;
     byte temperature_stats[3600][2];
-    byte max_temp_h, max_temp_dec, min_temp_h, min_temp_dec, avg_temp_h, avg_temp_dec;
+    int max_temp_h, max_temp_dec, min_temp_h, min_temp_dec, avg_temp_h, avg_temp_dec;
     
 
 
@@ -138,7 +136,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       convert_c_to_f(f_decimal, f_temperature_H, f_IsPositive, Decimal, Temperature_H, IsPositive);
 
       // DC : recording temperature every second
-//      Serial.println(array_index);
       int index = array_index % 3600;
       // populate array
       temperature_stats[index][0] = Temperature_H;
@@ -153,15 +150,11 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         j = 3600;
       }
       Serial.println(j);
-      // compute statistics
-      min_temp = 100;
-      max_temp = 0;
-      avg_temp = 0;
-      
-      max_temp_h = 0;
-      max_temp_dec = 0;
-      min_temp_h = 100;
-      min_temp_dec = 100;
+      // compute statistics      
+      max_temp_h = INT_MIN;
+      max_temp_dec = INT_MIN;
+      min_temp_h = INT_MAX;
+      min_temp_dec = INT_MAX;
       avg_temp_h = 0;
       avg_temp_dec = 0;
       
@@ -177,14 +170,17 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         avg_temp_h += temperature_stats[i][0];
         avg_temp_dec += temperature_stats[i][1];
       }
+      if (avg_temp_dec >= 100) {
+        avg_temp_h += (avg_temp_dec / 100);
+        avg_temp_dec = (avg_temp_dec % 100);
+      }
       avg_temp_h = (avg_temp_h / j);
       avg_temp_dec = (avg_temp_dec / j);
 
       // update index
       array_index++;
-      
       // TODO display stats
-      Serial.print(" max : ");
+      Serial.print("max : ");
       Serial.print(max_temp_h, DEC);
       Serial.print(".");
       Serial.println(max_temp_dec, DEC);
