@@ -30,6 +30,7 @@ Change History:
 const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   0x6D,0x7D,0x07,0x7F,0x6F,
   0x77,0x7C,0x39,0x5E,0x79,0x71};
+  // 0 1 2 3 4 5 6 7 8 9 A B C D E F
 
   /* Function prototypes */
   void convert_c_to_f (int&, byte&, bool&, int, byte, bool&);
@@ -206,6 +207,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
         else if (incomingByte == 9995) { // TODO : stats
+          // TODO covnert to F if necessary
           Serial.print("max : ");
           Serial.print(max_temp_h, DEC);
           Serial.print(".");
@@ -239,10 +241,16 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
 
         }
-        else if (incomingByte == 9993) {
-          // TODO : other features
+        else if (incomingByte == 9993) {  // TODO feature 2 word 1
+          Word_7SEG(0, 1, 2, 3); //  Oops
+        }
+        else if (incomingByte == 9993) { // TODO feature 2 word 2
+          Word_7SEG(4, 5, 6, 0); //  Hello
         }
 
+        else if (incomingByte == 9993) { // TODO feature 2 word 3
+          Word_7SEG(4, 0, 11, 10); //  HOLA
+        }
       }
 
       /* Display temperature on the 7-Segment */
@@ -255,9 +263,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         delay(1000);
       }
 
+
+
       if (celsius == true) { // DC : display in C
-        //        Serial.print("\n average temperature : " + avg_Temperature_H);
-        //        Serial.print("\n average temp Dec : " + avg_Decimal);
         Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
       } else { // DC: display in F
         Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
@@ -265,6 +273,53 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
       delay (1000);        /* Take temperature read every 1 second */
     }
+  }
+
+
+  /***************************************************************************
+  Function Name: Word_7SEG
+  Purpose:
+  Display word on the 7-segment display.
+  ****************************************************************************/
+  void Word_7SEG (byte letterOne, byte letterTwo, byte letterThree, byte letterFour)
+  {
+
+    const byte alphabet[12]= {
+      0x3F, // O 0
+      0x5C, // o 1
+      0x73, // P 2
+      0x6D, // S 3
+      0x76, // H 4
+      0x79, // E 5
+      0x36, // ll 6
+      0x3D, // G 7
+      0x7F, // B 8
+      0x6E, // Y 9
+      0x77, // A 10
+      0x38, // L 11
+    };
+    byte Digit = 4;                 /* Number of 7-Segment digit */
+    /* Temporary variable hold the number to display */
+
+
+    Send7SEG (Digit,alphabet[letterOne]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+    Send7SEG (Digit,alphabet[letterTwo]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+    Send7SEG (Digit,alphabet[letterThree]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+    Send7SEG (Digit,alphabet[letterFour]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+
+    if (Digit > 0)                 /* Clear the rest of the digit */
+    {
+      Send7SEG (Digit,0x00);
+    }
+
   }
 
 
@@ -422,7 +477,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       digitalWrite(GREEN, HIGH);
     }
   }
-
+  
   /***************************************************************************
   Function Name: SerialMonitorPrint
   Purpose:
@@ -445,4 +500,5 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       Serial.print(" degrees F.");
     }
     Serial.print("\n\n");
+
   }
