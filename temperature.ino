@@ -292,8 +292,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         byte tooHot = -1;
         byte tooCold = -1;
 
-        get: key from server that will tell me if its cold, hot or ok
-
         if (incomingByte == 9999){ // TODO : feature 4 35 degrees too hot
           tooHot = 35;
         }
