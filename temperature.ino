@@ -203,6 +203,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
         }
         else if (incomingByte == 9990) { // TODO : temp f
+          celsius = false;
           Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
@@ -544,5 +545,4 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       Serial.print(" degrees F.");
     }
     Serial.print("\n\n");
-
   }
