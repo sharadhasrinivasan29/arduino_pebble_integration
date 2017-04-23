@@ -31,7 +31,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   0x6D,0x7D,0x07,0x7F,0x6F,
   0x77,0x7C,0x39,0x5E,0x79,0x71};
   // 0 1 2 3 4 5 6 7 8 9 A B C D E F
-
+  
   /* Function prototypes */
   void convert_c_to_f (int&, byte&, bool&, int, byte, bool&);
   void Cal_temp (int&, byte&, byte&, bool&);
@@ -40,13 +40,13 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   void SerialMonitorPrint (byte, int, bool, bool);
   void UpdateRGB (byte);
   int incomingByte;
-
+  
   /***************************************************************************
   Function Name: setup
   Purpose:
   Initialize hardwares.
   ****************************************************************************/
-
+  
   void setup()
   {
     Serial.begin(BAUD);
@@ -57,13 +57,13 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     pinMode(LED_BUILTIN, OUTPUT);
     delay(500);          /* Allow system to stabilize */
   }
-
+  
   /***************************************************************************
   Function Name: loop
   Purpose:
   Run-time forever loop.
   ****************************************************************************/
-
+  
   void loop()
   {
     //  String msg = ""; // DC
@@ -72,6 +72,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     bool IsPositive;
     bool stop = 0;
 
+    // DC
+    bool writing_word = false;
     // DC temperature conversion
     bool celsius = true;
     bool standby = false;
@@ -79,40 +81,40 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     int f_decimal = 0;
     byte f_temperature_H = 0;
     byte f_temperature_L = 0;
-
+    
     // DC storing temperature data
     int array_index = 0;
     byte temperature_stats[3600][2];
     int max_temp_h, max_temp_dec, min_temp_h, min_temp_dec, avg_temp_h, avg_temp_dec;
-
-
-
+    
+    
+    
     /* Configure 7-Segment to 12mA segment output current, Dynamic mode,
     and Digits 1, 2, 3 AND 4 are NOT blanked */
-
+    
     Wire.beginTransmission(_7SEG);
     byte val = 0;
     Wire.write(val);
     val = B01000111;
     Wire.write(val);
     Wire.endTransmission();
-
+    
     /* Setup configuration register 12-bit */
-
+    
     Wire.beginTransmission(THERM);
     val = 1;
     Wire.write(val);
     val = B01100000;
     Wire.write(val);
     Wire.endTransmission();
-
+    
     /* Setup Digital THERMometer pointer register to 0 */
-
+    
     Wire.beginTransmission(THERM);
     val = 0;
     Wire.write(val);
     Wire.endTransmission();
-
+    
     /* Test 7-Segment */
     for (counter=0; counter<8; counter++)
     {
@@ -125,17 +127,17 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       Wire.endTransmission();
       delay (250);
     }
-
+    
     while (1)
     {
       Wire.requestFrom(THERM, 2);
       Temperature_H = Wire.read();
       Temperature_L = Wire.read();
-
+      
       /* Calculate temperature */
       Cal_temp (Decimal, Temperature_H, Temperature_L, IsPositive);
       convert_c_to_f(f_decimal, f_temperature_H, f_IsPositive, Decimal, Temperature_H, IsPositive);
-
+      
       // DC : recording temperature every second
       int index = array_index % 3600;
       // populate array
@@ -157,7 +159,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       min_temp_dec = INT_MAX;
       avg_temp_h = 0;
       avg_temp_dec = 0;
-
+      
       for (int i = 0; i < j; i++) {
         if (temperature_stats[i][0] < min_temp_h && temperature_stats[i][1] < min_temp_dec) {
           min_temp_h = temperature_stats[i][0];
@@ -176,10 +178,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       }
       avg_temp_h = (avg_temp_h / j);
       avg_temp_dec = (avg_temp_dec / j);
-
+      
       // update index
       array_index++;
-
+      
       /* Display temperature on the serial monitor.
       Comment out this line if you don't use serial monitor.*/
       if (stop == 0) {
@@ -190,36 +192,39 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
       }
-
+      
       /* Update RGB LED.*/
       UpdateRGB (Temperature_H);
-
-      if (Serial.available() > 0) {
+      
+//      if (Serial.available() > 0) {
         // handle commands from server
-        incomingByte = Serial.read();
+        incomingByte = 52;
+//        incomingByte = Serial.read(); // DC commented out TODO uncomment
         if (incomingByte == 49) {
           celsius = true;
+          if (writing_word == false) {
           Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
+          }
         }
-        else if (incomingByte == 9990) { // TODO : temp f
+        if (incomingByte == 9990) { // TODO : temp f
           celsius = false;
           Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
-        else if (incomingByte == 9995) { // TODO : stats
-          // TODO covnert to F if necessary
+        if (incomingByte == 9995) { // TODO : stats
+          // TODO convert to F if necessary
           if (celsius) {
             Serial.print("max : ");
             Serial.print(max_temp_h, DEC);
             Serial.print(".");
             Serial.println(max_temp_dec, DEC);
-
+            
             Serial.print("min : ");
             Serial.print(min_temp_h, DEC);
             Serial.print(".");
             Serial.println(min_temp_dec, DEC);
-
+            
             Serial.print("avg : ");
             Serial.print(avg_temp_h, DEC);
             Serial.print(".");
@@ -238,37 +243,71 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             //
           }
         }
-        else if (incomingByte == 9991) { // TODO : standby
+        if (incomingByte == 9991) { // TODO : standby
           standby = true;
           for (counter = 1; counter <= 4; counter++) {
             Send7SEG(counter,0x40); // print ----
           }
           Serial.print("--- standby ---");
         }
-        else if (incomingByte == 9992) { // TODO : resume from standby
+        if (incomingByte == 9992) { // TODO : resume from standby
           standby = false;
           celsius = true;
           Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
-
         }
-        else if (incomingByte == 9993) {  // TODO feature 2 word 1
+        /*Feature #1: Display(on the pebble) whether the temperature has been rising or falling over the past hour.
+        This information will be sent from the arduino, and will be based on a linear regression on the temperature data from the past hour. */
+        if (incomingByte == 50) {// TODO feature 1
+          long xsum;
+          long ysum;
+          long xxsum;
+          long xysum;
+          double mNumerator;
+          double mDenominator;
+          double m;
+          
+          //calculate summations over the past hour
+          for (int i = 0; i < j; i++){
+            ysum = ysum + temperature_stats[i][0];
+            xsum = xsum + i;
+            xysum = xysum + (i * temperature_stats[index][0]);
+            xxsum = xxsum + (i*i);
+          }
+          
+          //calculate slope of regression
+          mNumerator = (j * xysum) - (xsum * ysum);
+          mDenominator = (j * xxsum) - (xsum * xsum);
+          m = mNumerator / mDenominator;
+          
+          //send trend to computer
+          if (m > 0){
+            Serial.print("The temperature trend is increasing.");
+          } else if (m < 0){
+            Serial.print("The temperature trend is decreasing.");
+          } else {
+            Serial.print("The temperature has remained constant.");
+          }          
+        } // end of feature 1
+        
+        if (incomingByte == 52) {  // TODO feature 2 word 1
+          writing_word = true;
           Word_7SEG(0, 1, 2, 3); //  Oops
         }
-        else if (incomingByte == 9993) { // TODO feature 2 word 2
+        if (incomingByte == 9993) { // TODO feature 2 word 2
           Word_7SEG(4, 5, 6, 0); //  Hello
         }
-        else if (incomingByte == 9993) { // TODO feature 2 word 3
+        if (incomingByte == 9993) { // TODO feature 2 word 3
           Word_7SEG(4, 0, 11, 10); //  HOLA
-        }
-        else if (incomingByte == 9993) { // TODO feature 3 too cold
+        } // end of feature 2
+        if (incomingByte == 9993) { // TODO feature 3 too cold
           // blink blue
           digitalWrite(BLUE, HIGH);
           delay(1000);                       // wait for a second
           digitalWrite(BLUE, LOW);
           delay(1000);                       // wait for a second
         }
-        else if (incomingByte == 9993) { // TODO feature 3 temp is just right
+        if (incomingByte == 9993) { // TODO feature 3 temp is just right
           // blink green
           digitalWrite(GREEN, HIGH);
           delay(1000);                       // wait for a second
@@ -281,47 +320,41 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           delay(1000);                       // wait for a second
           digitalWrite(RED, LOW);
           delay(1000);                       // wait for a second
-        }
-        else if (incomingByte == 9993) { // TODO feature 4 drink 1
-        }
-        else if (incomingByte == 9993) { // TODO feature 4 drink 2
-        }
-        else if (incomingByte == 9993) { // TODO feature 4 drink 3
-        }
-
+        } // end of feature 3
+        
         byte tooHot = -1;
         byte tooCold = -1;
-
+        
         if (incomingByte == 9999){ // TODO : feature 4 35 degrees too hot
           tooHot = 35;
         }
-
+        
         if (incomingByte == 9999){ // TODO: feature 4 30 degrees too hot
-
+          
           tooHot = 30;
-
+          
         }
-
+        
         if (incomingByte == 9999){ // TODO: feature 4 25 degrees too hot
-
+          
           tooHot = 25;
-
+          
         }
-
+        
         if (incomingByte == 9999) { // TODO: feature 4 0 is too cold
-
+          
           tooCold = 0;
-
+          
         }
-
+        
         if (incomingByte == 9999 ){ // TODO: feature 4 5 degrees is too cold
           tooCold = 5;
         }
-
+        
         if (incomingByte == 9999){ // TODO : feature 4 10 degrees is too cold
           tooCold = 10;
         }
-
+        
         if (incomingByte == 9990){ // TODO : feature 4 asking for a drink 9990 is "thirsty" option
         if (tooHot == -1 || tooCold == -1) {
           // error handling
@@ -335,32 +368,30 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           Serial.print("Have a glass of water!");
         }
       }
-    }
-
+//    }
+    
     /*Feature #4: From the pebble, the user will be able to select a temperature above which,
     it gets too hot for them, and another temperature below which it gets too cold for them.
     The arduino will save these temperatures.The user may select(from the pebble) that he wants a drink suggestion.
     The ardiuno will calculate this based on how the current temp compares to the hot/cold range
     set by the user earlier. */
-
+    
     /* Display temperature on the 7-Segment */
     if (standby == true) {
       for (counter = 1; counter <= 4; counter++) {
         Send7SEG(counter,0x40); // print ----
         //          Wire.endTransmission();
       }
-
+      
       delay(1000);
     }
-
-
-
-    if (celsius == true) { // DC : display in C
+    
+    if (celsius == true && writing_word == false) { // DC : display in C
       Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
-    } else { // DC: display in F
+    } else if (celsius == false && writing_word == false) { // DC: display in F
       Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
     }
-
+    
     delay (1000);        /* Take temperature read every 1 second */
   }
 }
@@ -372,7 +403,7 @@ Display word on the 7-segment display.
 ****************************************************************************/
 void Word_7SEG (byte letterOne, byte letterTwo, byte letterThree, byte letterFour)
 {
-
+  
   const byte alphabet[12]= {
     0x3F, // O 0
     0x5C, // o 1
@@ -389,26 +420,26 @@ void Word_7SEG (byte letterOne, byte letterTwo, byte letterThree, byte letterFou
   };
   byte Digit = 4;                 /* Number of 7-Segment digit */
   /* Temporary variable hold the number to display */
-
-
+  
+  
   Send7SEG (Digit,alphabet[letterOne]);     /* Display on the 7-Segment */
   Digit--;                      /* Subtract 1 digit */
-
+  
   Send7SEG (Digit,alphabet[letterTwo]);     /* Display on the 7-Segment */
   Digit--;                      /* Subtract 1 digit */
-
+  
   Send7SEG (Digit,alphabet[letterThree]);     /* Display on the 7-Segment */
   Digit--;                      /* Subtract 1 digit */
-
+  
   Send7SEG (Digit,alphabet[letterFour]);     /* Display on the 7-Segment */
   Digit--;                      /* Subtract 1 digit */
-
-
+  
+  
   if (Digit > 0)                 /* Clear the rest of the digit */
   {
     Send7SEG (Digit,0x00);
   }
-
+  
 }
 
 
@@ -445,13 +476,13 @@ void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
   sign = 0;
   else
   sign = 1;
-
+  
   High = High & B01111111;      /* Remove sign bit */
   Low = Low & B11110000;        /* Remove last 4 bits */
   Low = Low >> 4;
   Decimal = Low;
   Decimal = Decimal * 625;      /* Each bit = 0.0625 degree C */
-
+  
   if (sign == 0)                /* if temperature is negative */
   {
     High = High ^ B01111111;    /* Complement all of the bits, except the MSB */
@@ -468,13 +499,13 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC 
 {
   byte Digit = 4;                 /* Number of 7-Segment digit */
   byte Number;                    /* Temporary variable hold the number to display */
-
+  
   if (sign == 0)                  /* When the temperature is negative */
   {
     Send7SEG(Digit,0x40);         /* Display "-" sign */
     Digit--;                      /* Decrement number of digit */
   }
-
+  
   if (High > 99)                  /* When the temperature is three digits long */
   {
     Number = High / 100;          /* Get the hundredth digit */
@@ -482,7 +513,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC 
     High = High % 100;            /* Remove the hundredth digit from the TempHi */
     Digit--;                      /* Subtract 1 digit */
   }
-
+  
   if (High > 9)
   {
     Number = High / 10;           /* Get the tenth digit */
@@ -490,7 +521,7 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC 
     High = High % 10;            /* Remove the tenth digit from the TempHi */
     Digit--;                      /* Subtract 1 digit */
   }
-
+  
   Number = High;                  /* Display the last digit */
   Number = NumberLookup [Number];
   if (Digit > 1)                  /* Display "." if it is not the last digit on 7-SEG */
@@ -499,14 +530,14 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC 
   }
   Send7SEG (Digit,Number);
   Digit--;                        /* Subtract 1 digit */
-
+  
   if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
   {
     Number = Decimal / 1000;
     Send7SEG (Digit,NumberLookup[Number]);
     Digit--;
   }
-
+  
   //  if(incomingByte == 49) {
   if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
   {
@@ -518,13 +549,13 @@ void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC 
     Digit--;
   }
   //  }
-
-
+  
+  
   if (Digit > 0)                 /* Clear the rest of the digit */
   {
     Send7SEG (Digit,0x00);
   }
-
+  
 }
 
 /***************************************************************************
@@ -552,7 +583,7 @@ void UpdateRGB (byte Temperature_H)
   digitalWrite(RED, LOW);
   digitalWrite(GREEN, LOW);
   digitalWrite(BLUE, LOW);        /* Turn off all LEDs. */
-
+  
   if (Temperature_H <= COLD)
   {
     digitalWrite(BLUE, HIGH);
