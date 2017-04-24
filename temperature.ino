@@ -163,8 +163,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         j = 3600;
       }
       // compute statistics
-      double current_temp = Temperature_H + ((double) Decimal / 1000.0); // DC 0424
-      temperature_double[j] = current_temp; // DC 0424
+      double current_temp = Temperature_H + ((double) Decimal / 1000.0);
+      temperature_double[j] = current_temp;
 
       avg_temp_h = 0; // TODO
       avg_temp_dec = 0; // TODO
@@ -228,11 +228,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             showing_trend = false;
             if (celsius) {
               SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
-              Serial.println("");
               continue; // DC TODO check
             } else {
               SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
-              Serial.println("");
               continue; // DC TODO check
             }
           }
@@ -259,10 +257,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             showing_trend = false;
             if (celsius) {
               Serial.print(avg_temp);
-              Serial.println(" C.");
+              Serial.print(" C.");
             } else {
               Serial.print(avg_temp_f);
-              Serial.println(" F.");
+              Serial.print(" F.");
             }
           }
         }
@@ -273,10 +271,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             showing_trend = false;
             if (celsius) {
               Serial.print(max_temp);
-              Serial.println(" C.");
+              Serial.print(" C.");
             } else {
               Serial.print(max_temp_f);
-              Serial.println(" F.");
+              Serial.print(" F.");
             }
           }
         }
@@ -287,10 +285,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             showing_trend = false;
             if (celsius) {
               Serial.print(min_temp);
-              Serial.println(" C.");
+              Serial.print(" C.");
             } else {
               Serial.print(avg_temp_f);
-              Serial.println(" F.");
+              Serial.print(" F.");
             }
           }
         }
@@ -347,11 +345,11 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
             //send trend to computer
             if (m > 0){
-              Serial.println("The temperature trend is increasing.");
+              Serial.print("The temperature trend is increasing.");
             } else if (m < 0){
-              Serial.println("The temperature trend is decreasing.");
+              Serial.print("The temperature trend is decreasing.");
             } else {
-              Serial.println("The temperature has remained constant.");
+              Serial.print("The temperature has remained constant.");
             }
           }
         }
