@@ -41,6 +41,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   void UpdateRGB (byte);
   int incomingByte;
 
+
   /***************************************************************************
   Function Name: setup
   Purpose:
@@ -66,7 +67,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
   void loop()
   {
-    String msg = ""; // DC
+    //    char msg; // DC
     int Decimal;
     byte Temperature_H, Temperature_L, counter, counter2;
     bool IsPositive;
@@ -88,7 +89,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     // DC storing temperature data
     int array_index = 0;
     byte temperature_stats[3600][2];
+    double temperature_double[3600];
     int max_temp_h, max_temp_dec, min_temp_h, min_temp_dec, avg_temp_h, avg_temp_dec;
+    double max_temp, min_temp, avg_temp;
 
 
 
@@ -156,51 +159,34 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         j = 3600;
       }
       // compute statistics
-      max_temp_h = INT_MIN;
-      max_temp_dec = INT_MIN;
-      min_temp_h = INT_MAX;
-      min_temp_dec = INT_MAX;
-      double current_temp = Temperature_H + ((double) Decimal / 100);
-      double max_temp = -1000;
-      double min_temp = 1000;
+      double current_temp = Temperature_H + ((double) Decimal / 1000.0); // DC 0424
       avg_temp_h = 0;
       avg_temp_dec = 0;
 
+      temperature_double[j] = current_temp; // DC 0424
+
       for (int i = 0; i < j; i++) {
-        if (current_temp < min_temp) {
-          min_temp = current_temp;
-          min_temp_h = temperature_stats[i][0];
-          min_temp_dec = temperature_stats[i][1];
+        double max_temp = -1000;
+        double min_temp = 1000;
+        double avg_temp = 0;
+        if (temperature_double[i] < min_temp) {
+          min_temp = temperature_double[i];
         }
-        if (current_temp > max_temp) {
-          max_temp = current_temp;
-          max_temp_h = temperature_stats[i][0];
-          max_temp_dec = temperature_stats[i][1];
+        if (temperature_double[i] > max_temp) {
+          max_temp = temperature_double[i];
         }
-        avg_temp_h += temperature_stats[i][0];
-        avg_temp_dec += temperature_stats[i][1];
+        avg_temp += current_temp;
+        avg_temp = (avg_temp / j);
       }
-      if (avg_temp_dec >= 100) {
-        avg_temp_h += (avg_temp_dec / 100);
-        avg_temp_dec = (avg_temp_dec % 100);
-      }
-      avg_temp_h = (avg_temp_h / j);
-      avg_temp_dec = (avg_temp_dec / j);
 
-      Serial.print(" max  : ");
-      Serial.print(max_temp_h);
-      Serial.print(".");
-      Serial.println(max_temp_dec); 
+      Serial.print(" max  : "); // TODO delete
+      Serial.print(max_temp); // TODO delete
 
-      Serial.print(" min  : ");
-      Serial.print(min_temp_h);
-      Serial.print(".");
-      Serial.println(min_temp_dec); 
+      Serial.print(" min  : "); // TODO delete
+      Serial.print(min_temp); // TODO delete
 
-      Serial.print(" avg  : ");
-      Serial.print(avg_temp_h);
-      Serial.print(".");
-      Serial.println(avg_temp_dec); 
+      Serial.print(" avg  : "); // TODO delete
+      Serial.print(avg_temp); // TODO delete
 
       // update index
       array_index++;
@@ -227,12 +213,13 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         digitalWrite(BLUE, LOW);
       }
 
+      Serial.print("BEF");
       if (Serial.available() > 0) {
-        // handle commands from server
-        //        incomingByte = Serial.read(); // DC commented out
-        msg = Serial.readString();
+        char msg = Serial.read();
+        Serial.print("Bytes available");
+        //        Serial.println(incoming);
 
-        if (msg.equals("02")) {
+        if (msg == '2') {
           celsius = true;
           writing_word = false;
           blinking = false;
@@ -240,7 +227,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
         }
-        if (msg.equals("01")){
+        if (msg == '1'){
           celsius = false;
           writing_word = false;
           blinking = false;
@@ -248,87 +235,87 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
           SerialMonitorPrint(f_temperature_H, f_decimal, f_IsPositive, false);
         }
-        if (msg.equals("03")) { // stats : avg
+        if (msg == '3') { // stats : avg
           // avg temp
           writing_word = false;
           blinking = false;
           showing_trend = false;
           if (celsius) {
-            Serial.print(avg_temp_h, DEC);
-            Serial.print(".");
+            //Serial.print(avg_temp_h, DEC);
+            //Serial.print(".");
             if (avg_temp_dec < 10) {
-              Serial.print(0, DEC);
+              //Serial.print(0, DEC);
             }
-            Serial.print(avg_temp_dec, DEC);
-            Serial.println(" C.");
+            //Serial.print(avg_temp_dec, DEC);
+            //Serial.println(" C.");
           } else {
             int convert_decimal;
             byte convert_high;
             bool convert_sign;
             convert_c_to_f (convert_decimal, convert_high, convert_sign, avg_temp_dec, avg_temp_h, IsPositive);
-            Serial.print(convert_high, DEC);
-            Serial.print(".");
+            //Serial.print(convert_high, DEC);
+            //Serial.print(".");
             if (convert_decimal < 10) {
-              Serial.print(0, DEC);
+              //Serial.print(0, DEC);
             }
-            Serial.print(convert_decimal, DEC);
-            Serial.println(" F.");
+            //Serial.print(convert_decimal, DEC);
+            //Serial.println(" F.");
           }
 
         }
-        if (msg.equals("04")) { // stats : max
+        if (msg == '4') { // stats : max
           writing_word = false;
           blinking = false;
           showing_trend = false;
           if (celsius) {
-            Serial.print("max : ");
-            Serial.print(max_temp_h, DEC);
-            Serial.print(".");
-            Serial.print(max_temp_dec, DEC);
-            Serial.println(" C.");
+            //Serial.print("max : ");
+            //Serial.print(max_temp_h, DEC);
+            //Serial.print(".");
+            //Serial.print(max_temp_dec, DEC);
+            //Serial.println(" C.");
           } else {
             int convert_decimal;
             byte convert_high;
             bool convert_sign;
 
             convert_c_to_f (convert_decimal, convert_high, convert_sign, max_temp_dec, max_temp_h, IsPositive);
-            Serial.print("max : ");
-            Serial.print(convert_high, DEC);
-            Serial.print(".");
+            //Serial.print("max : ");
+            //Serial.print(convert_high, DEC);
+            //Serial.print(".");
             if (convert_decimal < 10) {
-              Serial.print(0, DEC);
+              //Serial.print(0, DEC);
             }
-            Serial.print(convert_decimal, DEC);
-            Serial.println(" F.");
+            //Serial.print(convert_decimal, DEC);
+            //Serial.println(" F.");
           }
         }
-        if (msg.equals("05")) { // stats : min
+        if (msg == '5') { // stats : min
           writing_word = false;
           blinking = false;
           showing_trend = false;
           if (celsius) {
-            Serial.print("min : ");
-            Serial.print(min_temp_h, DEC);
-            Serial.print(".");
-            Serial.print(min_temp_dec, DEC);
-            Serial.println(" C.");
+            //Serial.print("min : ");
+            //Serial.print(min_temp_h, DEC);
+            //Serial.print(".");
+            //Serial.print(min_temp_dec, DEC);
+            //Serial.println(" C.");
           } else {
             int convert_decimal;
             byte convert_high;
             bool convert_sign;
 
             convert_c_to_f (convert_decimal, convert_high, convert_sign, min_temp_dec, min_temp_h, IsPositive);
-            Serial.print("min : ");
-            Serial.print(convert_high, DEC);
-            Serial.print(".");
+            //Serial.print("min : ");
+            //Serial.print(convert_high, DEC);
+            //Serial.print(".");
             if (convert_decimal < 10) {
-              Serial.print(0, DEC);
+              //Serial.print(0, DEC);
             }
-            Serial.print(convert_decimal, DEC);
-            Serial.println(" F.");
+            //Serial.print(convert_decimal, DEC);
+            //Serial.println(" F.");
           }
         }
-        if (msg.equals("06")) { // standby
+        if (msg == '6') { // standby
           standby = true;
           blinking = false;
           writing_word = false;
@@ -336,11 +323,11 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           for (counter = 1; counter <= 4; counter++) {
             Send7SEG(counter,0x40); // print ----
           }
-          Serial.print("--- standby ---");
+          //Serial.print("--- standby ---");
           delay(1000);
         }
-        
-        if (msg.equals("13")) { // resume from standby
+
+        if (msg == 'd') { // resume from standby
           // resume from standby
           standby = false;
           writing_word = false;
@@ -351,7 +338,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           SerialMonitorPrint (Temperature_H, Decimal, IsPositive, true);
         }
 
-        if (msg.equals("07")) { // feature 1 : trend
+        if (msg == '7') { // feature 1 : trend
           writing_word = false;
           blinking = false;
           showing_trend = true;
@@ -378,15 +365,15 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
 
           //send trend to computer
           if (m > 0){
-            Serial.println("The temperature trend is increasing.");
+            //Serial.println("The temperature trend is increasing.");
           } else if (m < 0){
-            Serial.println("The temperature trend is decreasing.");
+            //Serial.println("The temperature trend is decreasing.");
           } else {
-            Serial.println("The temperature has remained constant.");
+            //Serial.println("The temperature has remained constant.");
           }
         }
 
-        if (msg.equals("08")) { // feature 2 word 1 (Oops)
+        if (msg == '8') { // feature 2 word 1 (Oops)
           writing_word = true;
           showing_trend = false;
           Word_7SEG(0, 1, 2, 3);
@@ -399,7 +386,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           //          Word_7SEG(4, 0, 11, 10); //  HOLA
         }
 
-        if (msg.equals("09")) { // feature 3 blink green
+        if (msg == '9') { // feature 3 blink green
           writing_word = false;
           blinking = true;
           showing_trend = false;
@@ -409,7 +396,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           delay(1000);                       // wait for a second
         }
 
-        if (msg.equals("10")) { // feature 3 blink blue
+        if (msg == 'a') { // feature 3 blink blue
           writing_word = false;
           blinking = true;
           showing_trend = false;
@@ -420,7 +407,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         }
 
 
-        if (msg.equals("11")) { // feature 3 blink red
+        if (msg == 'b') { // feature 3 blink red
           writing_word = false;
           blinking = true;
           showing_trend = false;
@@ -430,10 +417,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           delay(1000);                       // wait for a second
         }
 
-        if (msg.equals("12")) { // feature 4
+        if (msg == 'c') { // feature 4
           // TODO drink recommendation
         }
-        
+
         byte tooHot = -1;
         byte tooCold = -1;
 
@@ -486,14 +473,14 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         blinking = false;
         if (tooHot == -1 || tooCold == -1) {
           // error handling
-          Serial.print("No preference found.");
+          //Serial.print("No preference found.");
         }
         if (Temperature_H >= tooHot){
-          Serial.print("Have an iced tea!");
+          //Serial.print("Have an iced tea!");
         } else if (Temperature_H <= tooCold){
-          Serial.print("Have a hot cocoa!");
+          //Serial.print("Have a hot cocoa!");
         } else {
-          Serial.print("Have a glass of water!");
+          //Serial.print("Have a glass of water!");
         }
       }
     }
@@ -726,19 +713,11 @@ Print current read temperature to the serial monitor.
 ****************************************************************************/
 void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
 {
-  Serial.print("The temperature is ");
-  if (!IsPositive)
-  {
-    Serial.print("-");
-  }
-  Serial.print(Temperature_H, DEC);
-  Serial.print(".");
-  Serial.print(Decimal, DEC);
-  if (isCelsius == true) {
-    Serial.print(" degrees C.");
-  }
-  else {
-    Serial.print(" degrees F.");
-  }
-  Serial.print("\n\n");
+  //  if (!IsPositive)
+  //  {
+  //    Serial.print("-");
+  //  }
+  //  Serial.print(Temperature_H, DEC);
+  //  Serial.print(".");
+  //  Serial.print(Decimal, DEC);
 }
