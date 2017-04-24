@@ -39,7 +39,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   void Send7SEG (byte, byte);
   void SerialMonitorPrint (byte, int, bool, bool);
   void UpdateRGB (byte);
-  int incomingByte;
 
 
   /***************************************************************************
@@ -303,10 +302,12 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           blinking = false;
           writing_word = true;
           showing_trend = false;
-          for (counter = 1; counter <= 4; counter++) {
-            Send7SEG(counter,0x40); // print ----
+          if (standby) {
+            for (counter = 1; counter <= 4; counter++) {
+              Send7SEG(counter,0x40); // print ----
+            }
+            delay(1000);
           }
-          delay(1000);
         }
 
         if (msg == 'd') { // resume from standby
@@ -314,10 +315,12 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           writing_word = false;
           blinking = false;
           showing_trend = false;
-          if (celsius) {
-            Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 1);
-          } else {
-            Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+          if (!standby) {
+            if (celsius) {
+              Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 1);
+            } else {
+              Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+            }
           }
         }
 
@@ -737,22 +740,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       digitalWrite(GREEN, HIGH);
     }
   }
-
-  /***************************************************************************
-  Function Name: SerialMonitorPrint
-  Purpose:
-  Print current read temperature to the serial monitor.
-  ****************************************************************************/
-  //  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
-  //  {
-  //    if (!IsPositive)
-  //    {
-  //      Serial.print("-");
-  //    }
-  //    Serial.print(Temperature_H, DEC);
-  //    Serial.print(".");
-  //    Serial.print(Decimal, DEC);
-  //  }
 
   /***************************************************************************
   Function Name: SerialMonitorPrint
