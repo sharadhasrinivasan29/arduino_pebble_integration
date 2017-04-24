@@ -93,7 +93,8 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
     double max_temp, min_temp, avg_temp;
     double current_temp_f, max_temp_f, min_temp_f, avg_temp_f;
 
-
+    byte tooHot = -1;
+    byte tooCold = -1;
 
     /* Configure 7-Segment to 12mA segment output current, Dynamic mode,
     and Digits 1, 2, 3 AND 4 are NOT blanked */
@@ -363,14 +364,6 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             showing_trend = false;
             Word_7SEG(0, 1, 2, 3);
           }
-
-          //          writing_word = true;
-          //          showing_trend = false;
-          //          Word_7SEG(4, 5, 6, 0); //  Hello
-          //          writing_word = true;
-          //          blinking = false;
-          //          showing_trend = false;
-          //          Word_7SEG(4, 0, 11, 10); //  HOLA
         }
 
         if (msg == '9') { // feature 3 blink green
@@ -430,319 +423,349 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           }
         }
 
-        if (msg == 'c') { // feature 4
-          // TODO drink recommendation
+        if (msg == 'c') { // feature 4 drink recommendation
+          showing_trend = false;
+          writing_word = false;
+          blinking = false;
+          if (tooHot == -1 || tooCold == -1) {
+            // error handling
+            //Serial.print("No preference found.");
+          }
+          if (Temperature_H >= tooHot){
+            //Serial.print("Have an iced tea!");
+          } else if (Temperature_H <= tooCold){
+            //Serial.print("Have a hot cocoa!");
+          } else {
+            //Serial.print("Have a glass of water!");
+          }
         }
-        // TODO drinks
 
-        byte tooHot = -1;
-        byte tooCold = -1;
+        if (msg == 'e') { // feature 2 word 2 Hello
+          if (!standby) {
+            writing_word = true;
+            blinking = false;
+            showing_trend = false;
+            Word_7SEG(4, 5, 6, 0);
+          }
+        }
+        if (msg == 'f') { // feature 2 word 3 Hola
+          if (!standby) {
+            writing_word = true;
+            blinking = false;
+            showing_trend = false;
+            Word_7SEG(4, 0, 11, 10);
+          }
+        }
 
-        if (incomingByte == 9999){ // TODO : feature 4 35 degrees too hot
+        if (msg == 'g') {
+          Serial.print(" ");
+        }
+
+        if (msg == 'h') { // 35
           showing_trend = false;
           writing_word = false;
           blinking = false;
           tooHot = 35;
         }
 
-        if (incomingByte == 9999){ // TODO: feature 4 30 degrees too hot
+        if (msg == 'i') { // 30
           showing_trend = false;
           writing_word = false;
           blinking = false;
           tooHot = 30;
         }
 
-        if (incomingByte == 9999){ // TODO: feature 4 25 degrees too hot
+        if (msg == 'j') { // 25
           writing_word = false;
           showing_trend = false;
           blinking = false;
           tooHot = 25;
-
         }
 
-        if (incomingByte == 9999) { // TODO: feature 4 0 is too cold
+        if (msg == 'k') {
+          Serial.print(" ");
+        }
+
+        if (msg == 'l') { // cold 0
           showing_trend = false;
           blinking = false;
           writing_word = false;
           tooCold = 0;
         }
-
-        if (incomingByte == 9999 ){ // TODO: feature 4 5 degrees is too cold
+        if (msg == 'm') { // cold 5
           showing_trend = false;
           writing_word = false;
           blinking = false;
           tooCold = 5;
         }
-
-        if (incomingByte == 9999){ // TODO : feature 4 10 degrees is too cold
+        if (msg == 'n') { // cold 10
           showing_trend = false;
           writing_word = false;
           blinking = false;
           tooCold = 10;
         }
-
-        if (incomingByte == 9990){ // TODO : feature 4 asking for a drink 9990 is "thirsty" option
-        showing_trend = false;
-        writing_word = false;
-        blinking = false;
-        if (tooHot == -1 || tooCold == -1) {
-          // error handling
-          //Serial.print("No preference found.");
-        }
-        if (Temperature_H >= tooHot){
-          //Serial.print("Have an iced tea!");
-        } else if (Temperature_H <= tooCold){
-          //Serial.print("Have a hot cocoa!");
-        } else {
-          //Serial.print("Have a glass of water!");
-        }
       }
-    }
 
-    /* Display temperature on the 7-Segment */
-    if (standby == true) {
-      for (counter = 1; counter <= 4; counter++) {
-        Send7SEG(counter,0x40); // print ----
-        //          Wire.endTransmission();
+      /* Display temperature on the 7-Segment */
+      if (standby == true) {
+        for (counter = 1; counter <= 4; counter++) {
+          Send7SEG(counter,0x40); // print ----
+          //          Wire.endTransmission();
+        }
+        delay(1000);
       }
-      delay(1000);
+
+      if (celsius == true && writing_word == false) { // DC : display in C
+        Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+      } else if (celsius == false && writing_word == false) { // DC: display in F
+        Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+      }
+
+      delay (1000);        /* Take temperature read every 1 second */
+    }
+  }
+
+  /***************************************************************************
+  Function Name: Word_7SEG
+  Purpose:
+  Display word on the 7-segment display.
+  ****************************************************************************/
+  void Word_7SEG (byte letterOne, byte letterTwo, byte letterThree, byte letterFour)
+  {
+
+    const byte alphabet[12]= {
+      0x3F, // O 0
+      0x5C, // o 1
+      0x73, // P 2
+      0x6D, // S 3
+      0x76, // H 4
+      0x79, // E 5
+      0x36, // ll 6
+      0x3D, // G 7
+      0x7F, // B 8
+      0x6E, // Y 9
+      0x77, // A 10
+      0x38, // L 11
+    };
+    byte Digit = 4;                 /* Number of 7-Segment digit */
+    /* Temporary variable hold the number to display */
+
+
+    Send7SEG (Digit,alphabet[letterOne]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+    Send7SEG (Digit,alphabet[letterTwo]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+    Send7SEG (Digit,alphabet[letterThree]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+    Send7SEG (Digit,alphabet[letterFour]);     /* Display on the 7-Segment */
+    Digit--;                      /* Subtract 1 digit */
+
+
+    if (Digit > 0)                 /* Clear the rest of the digit */
+    {
+      Send7SEG (Digit,0x00);
     }
 
-    if (celsius == true && writing_word == false) { // DC : display in C
-      Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
-    } else if (celsius == false && writing_word == false) { // DC: display in F
-      Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+  }
+
+
+  /***************************************************************************
+  Function Name: convert_c_to_f
+  // DC
+  Purpose:
+  Calculate temperature from raw data.
+  ****************************************************************************/
+  void convert_c_to_f (int& f_decimal, byte& f_high, bool& f_sign, int c_decimal, byte c_high, bool& c_sign) {
+    double deg_c, deg_f;
+    deg_c = c_high + ((double) c_decimal / 1000.0);
+    if (c_sign == 0) { // negative temperature
+      deg_c = - deg_c;
     }
-
-    delay (1000);        /* Take temperature read every 1 second */
-  }
-}
-
-/***************************************************************************
-Function Name: Word_7SEG
-Purpose:
-Display word on the 7-segment display.
-****************************************************************************/
-void Word_7SEG (byte letterOne, byte letterTwo, byte letterThree, byte letterFour)
-{
-
-  const byte alphabet[12]= {
-    0x3F, // O 0
-    0x5C, // o 1
-    0x73, // P 2
-    0x6D, // S 3
-    0x76, // H 4
-    0x79, // E 5
-    0x36, // ll 6
-    0x3D, // G 7
-    0x7F, // B 8
-    0x6E, // Y 9
-    0x77, // A 10
-    0x38, // L 11
-  };
-  byte Digit = 4;                 /* Number of 7-Segment digit */
-  /* Temporary variable hold the number to display */
-
-
-  Send7SEG (Digit,alphabet[letterOne]);     /* Display on the 7-Segment */
-  Digit--;                      /* Subtract 1 digit */
-
-  Send7SEG (Digit,alphabet[letterTwo]);     /* Display on the 7-Segment */
-  Digit--;                      /* Subtract 1 digit */
-
-  Send7SEG (Digit,alphabet[letterThree]);     /* Display on the 7-Segment */
-  Digit--;                      /* Subtract 1 digit */
-
-  Send7SEG (Digit,alphabet[letterFour]);     /* Display on the 7-Segment */
-  Digit--;                      /* Subtract 1 digit */
-
-
-  if (Digit > 0)                 /* Clear the rest of the digit */
-  {
-    Send7SEG (Digit,0x00);
-  }
-
-}
-
-
-/***************************************************************************
-Function Name: convert_c_to_f
-// DC
-Purpose:
-Calculate temperature from raw data.
-****************************************************************************/
-void convert_c_to_f (int& f_decimal, byte& f_high, bool& f_sign, int c_decimal, byte c_high, bool& c_sign) {
-  double deg_c, deg_f;
-  deg_c = c_high + ((double) c_decimal / 1000.0);
-  if (c_sign == 0) { // negative temperature
-    deg_c = - deg_c;
-  }
-  deg_f = (9.0 / 5.0) * deg_c + 32.0;
-  if (deg_f < 0) {
-    f_sign = 0; // negative f temp
-  } else {
-    f_sign = 1;
-  }
-  f_high = (int) deg_f;
-  f_decimal = (int) ((deg_f - f_high) * 1000);
-}
-
-
-/***************************************************************************
-Function Name: double_convert_c_to_f
-// DC
-Purpose:
-Calculate temperature from raw data.
-****************************************************************************/
-double convert_double_c_to_f (double input_c) {
-  return (9.0 / 5.0) * input_c + 32.0;
-}
-
-/***************************************************************************
-Function Name: Cal_temp
-Purpose:
-Calculate temperature from raw data.
-****************************************************************************/
-void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
-{
-  if ((High&B10000000)==0x80)    /* Check for negative temperature. */
-  sign = 0;
-  else
-  sign = 1;
-
-  High = High & B01111111;      /* Remove sign bit */
-  Low = Low & B11110000;        /* Remove last 4 bits */
-  Low = Low >> 4;
-  Decimal = Low;
-  Decimal = Decimal * 625;      /* Each bit = 0.0625 degree C */
-
-  if (sign == 0)                /* if temperature is negative */
-  {
-    High = High ^ B01111111;    /* Complement all of the bits, except the MSB */
-    Decimal = Decimal ^ 0xFF;   /* Complement all of the bits */
-  }
-}
-
-/***************************************************************************
-Function Name: Dis_7SEG
-Purpose:
-Display number on the 7-segment display.
-****************************************************************************/
-void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC : added a bool parameter
-{
-  byte Digit = 4;                 /* Number of 7-Segment digit */
-  byte Number;                    /* Temporary variable hold the number to display */
-
-  if (sign == 0)                  /* When the temperature is negative */
-  {
-    Send7SEG(Digit,0x40);         /* Display "-" sign */
-    Digit--;                      /* Decrement number of digit */
-  }
-
-  if (High > 99)                  /* When the temperature is three digits long */
-  {
-    Number = High / 100;          /* Get the hundredth digit */
-    Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
-    High = High % 100;            /* Remove the hundredth digit from the TempHi */
-    Digit--;                      /* Subtract 1 digit */
-  }
-
-  if (High > 9)
-  {
-    Number = High / 10;           /* Get the tenth digit */
-    Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
-    High = High % 10;            /* Remove the tenth digit from the TempHi */
-    Digit--;                      /* Subtract 1 digit */
-  }
-
-  Number = High;                  /* Display the last digit */
-  Number = NumberLookup [Number];
-  if (Digit > 1)                  /* Display "." if it is not the last digit on 7-SEG */
-  {
-    Number = Number | B10000000;
-  }
-  Send7SEG (Digit,Number);
-  Digit--;                        /* Subtract 1 digit */
-
-  if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
-  {
-    Number = Decimal / 1000;
-    Send7SEG (Digit,NumberLookup[Number]);
-    Digit--;
-  }
-
-  //  if(incomingByte == 49) {
-  if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
-  {
-    if (celsius == 0) {
-      Send7SEG (Digit,0x71);
+    deg_f = (9.0 / 5.0) * deg_c + 32.0;
+    if (deg_f < 0) {
+      f_sign = 0; // negative f temp
     } else {
-      Send7SEG (Digit,0x58);
+      f_sign = 1;
     }
-    Digit--;
+    f_high = (int) deg_f;
+    f_decimal = (int) ((deg_f - f_high) * 1000);
   }
+
+
+  /***************************************************************************
+  Function Name: double_convert_c_to_f
+  // DC
+  Purpose:
+  Calculate temperature from raw data.
+  ****************************************************************************/
+  double convert_double_c_to_f (double input_c) {
+    return (9.0 / 5.0) * input_c + 32.0;
+  }
+
+  /***************************************************************************
+  Function Name: Cal_temp
+  Purpose:
+  Calculate temperature from raw data.
+  ****************************************************************************/
+  void Cal_temp (int& Decimal, byte& High, byte& Low, bool& sign)
+  {
+    if ((High&B10000000)==0x80)    /* Check for negative temperature. */
+    sign = 0;
+    else
+    sign = 1;
+
+    High = High & B01111111;      /* Remove sign bit */
+    Low = Low & B11110000;        /* Remove last 4 bits */
+    Low = Low >> 4;
+    Decimal = Low;
+    Decimal = Decimal * 625;      /* Each bit = 0.0625 degree C */
+
+    if (sign == 0)                /* if temperature is negative */
+    {
+      High = High ^ B01111111;    /* Complement all of the bits, except the MSB */
+      Decimal = Decimal ^ 0xFF;   /* Complement all of the bits */
+    }
+  }
+
+  /***************************************************************************
+  Function Name: Dis_7SEG
+  Purpose:
+  Display number on the 7-segment display.
+  ****************************************************************************/
+  void Dis_7SEG (int Decimal, byte High, byte Low, bool sign, bool celsius) // DC : added a bool parameter
+  {
+    byte Digit = 4;                 /* Number of 7-Segment digit */
+    byte Number;                    /* Temporary variable hold the number to display */
+
+    if (sign == 0)                  /* When the temperature is negative */
+    {
+      Send7SEG(Digit,0x40);         /* Display "-" sign */
+      Digit--;                      /* Decrement number of digit */
+    }
+
+    if (High > 99)                  /* When the temperature is three digits long */
+    {
+      Number = High / 100;          /* Get the hundredth digit */
+      Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
+      High = High % 100;            /* Remove the hundredth digit from the TempHi */
+      Digit--;                      /* Subtract 1 digit */
+    }
+
+    if (High > 9)
+    {
+      Number = High / 10;           /* Get the tenth digit */
+      Send7SEG (Digit,NumberLookup[Number]);     /* Display on the 7-Segment */
+      High = High % 10;            /* Remove the tenth digit from the TempHi */
+      Digit--;                      /* Subtract 1 digit */
+    }
+
+    Number = High;                  /* Display the last digit */
+    Number = NumberLookup [Number];
+    if (Digit > 1)                  /* Display "." if it is not the last digit on 7-SEG */
+    {
+      Number = Number | B10000000;
+    }
+    Send7SEG (Digit,Number);
+    Digit--;                        /* Subtract 1 digit */
+
+    if (Digit > 0)                  /* Display decimal point if there is more space on 7-SEG */
+    {
+      Number = Decimal / 1000;
+      Send7SEG (Digit,NumberLookup[Number]);
+      Digit--;
+    }
+
+    //  if(incomingByte == 49) {
+    if (Digit > 0)                 /* Display "c" if there is more space on 7-SEG */
+    {
+      if (celsius == 0) {
+        Send7SEG (Digit,0x71);
+      } else {
+        Send7SEG (Digit,0x58);
+      }
+      Digit--;
+    }
+    //  }
+
+
+    if (Digit > 0)                 /* Clear the rest of the digit */
+    {
+      Send7SEG (Digit,0x00);
+    }
+
+  }
+
+  /***************************************************************************
+  Function Name: Send7SEG
+  Purpose:
+  Send I2C commands to drive 7-segment display.
+  ****************************************************************************/
+
+  void Send7SEG (byte Digit, byte Number)
+  {
+    Wire.beginTransmission(_7SEG);
+    Wire.write(Digit);
+    Wire.write(Number);
+    Wire.endTransmission();
+  }
+
+  /***************************************************************************
+  Function Name: UpdateRGB
+  Purpose:
+  Update RGB LED according to define HOT and COLD temperature.
+  ****************************************************************************/
+
+  void UpdateRGB (byte Temperature_H)
+  {
+    digitalWrite(RED, LOW);
+    digitalWrite(GREEN, LOW);
+    digitalWrite(BLUE, LOW);        /* Turn off all LEDs. */
+
+    if (Temperature_H <= COLD)
+    {
+      digitalWrite(BLUE, HIGH);
+    }
+    else if (Temperature_H >= HOT)
+    {
+      digitalWrite(RED, HIGH);
+    }
+    else
+    {
+      digitalWrite(GREEN, HIGH);
+    }
+  }
+
+  /***************************************************************************
+  Function Name: SerialMonitorPrint
+  Purpose:
+  Print current read temperature to the serial monitor.
+  ****************************************************************************/
+  //  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
+  //  {
+  //    if (!IsPositive)
+  //    {
+  //      Serial.print("-");
+  //    }
+  //    Serial.print(Temperature_H, DEC);
+  //    Serial.print(".");
+  //    Serial.print(Decimal, DEC);
   //  }
 
-
-  if (Digit > 0)                 /* Clear the rest of the digit */
-  {
-    Send7SEG (Digit,0x00);
-  }
-
-}
-
-/***************************************************************************
-Function Name: Send7SEG
-Purpose:
-Send I2C commands to drive 7-segment display.
-****************************************************************************/
-
-void Send7SEG (byte Digit, byte Number)
-{
-  Wire.beginTransmission(_7SEG);
-  Wire.write(Digit);
-  Wire.write(Number);
-  Wire.endTransmission();
-}
-
-/***************************************************************************
-Function Name: UpdateRGB
-Purpose:
-Update RGB LED according to define HOT and COLD temperature.
-****************************************************************************/
-
-void UpdateRGB (byte Temperature_H)
-{
-  digitalWrite(RED, LOW);
-  digitalWrite(GREEN, LOW);
-  digitalWrite(BLUE, LOW);        /* Turn off all LEDs. */
-
-  if (Temperature_H <= COLD)
-  {
-    digitalWrite(BLUE, HIGH);
-  }
-  else if (Temperature_H >= HOT)
-  {
-    digitalWrite(RED, HIGH);
-  }
-  else
-  {
-    digitalWrite(GREEN, HIGH);
-  }
-}
-
-/***************************************************************************
-Function Name: SerialMonitorPrint
-Purpose:
-Print current read temperature to the serial monitor.
-****************************************************************************/
-//  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
-//  {
-//    if (!IsPositive)
-//    {
-//      Serial.print("-");
-//    }
-//    Serial.print(Temperature_H, DEC);
-//    Serial.print(".");
-//    Serial.print(Decimal, DEC);
-//  }
+  /***************************************************************************
+  Function Name: SerialMonitorPrint
+  Purpose:
+  Print current read temperature to the serial monitor.
+  ****************************************************************************/
+  //  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
+  //  {
+  //    if (!IsPositive)
+  //    {
+  //      Serial.print("-");
+  //    }
+  //    Serial.print(Temperature_H, DEC);
+  //    Serial.print(".");
+  //    Serial.print(Decimal, DEC);
+  //  }
