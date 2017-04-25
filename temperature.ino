@@ -27,6 +27,7 @@ Change History:
 #define COLD (23)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (26)       /* Hot temperature, drive red LED (27c) */
 
+bool interrupted = false;
 const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   0x6D,0x7D,0x07,0x7F,0x6F,
   0x77,0x7C,0x39,0x5E,0x79,0x71};
@@ -224,6 +225,10 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       }
 
       if (Serial.available() > 0) {
+        if (interrupted == true) { // DC 4/25 testing
+          Serial.print("Reconnecting to Arduino.");
+          interrupted = false;
+        }
         char msg = Serial.read();
 
         if (msg == '0') { // display current temp
@@ -549,13 +554,15 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           tooCold = 10;
           Serial.print(" ");
         }
+      } else {
+        interrupted = true;
       }
 
-      if (celsius == true && writing_word == false) { // display in C
-        Dis_7SEG(Decimal, Temperature_H, Temperature_L, IsPositive, 1);
-      } else if (celsius == false && writing_word == false) { // display in F
-        Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
-      }
+//      if (celsius == true && writing_word == false) { // display in C
+//        Dis_7SEG(Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+//      } else if (celsius == false && writing_word == false) { // display in F
+//        Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+//      }
 
       delay (1000);        /* Take temperature read every 1 second */
     }
