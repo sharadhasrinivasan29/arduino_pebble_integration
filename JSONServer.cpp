@@ -146,7 +146,7 @@ int main(int argc, char *argv[]){
       key = request[5];
       cout << "Key is: " << key << endl << endl; 
 
-      write(fd1,&key, 1);
+      int returnVal = write(fd1,&key, 1);
       
       // 6. send: send the message over the socket
       // note that the second argument is a char*, and the third is the number of chars
@@ -156,25 +156,16 @@ int main(int argc, char *argv[]){
         char buff[100];
         int bytes_read = read(fd1, buff, 100);
         string reply;
-
-        if(bytes_read < 0) {
-          int count = 0; 
-          int looping = 1;
-          while(looping == 1) {
-            if(count < 1) {
-              string correct_reply = " ";
-              reply = "{\n\"name\": \"" + correct_reply +"\0" + "\"\n}\n";
-            }
-            else {
-            //   cout << "ARDUINO DISCONNECTED. PLEASE RESTART!";
-            //   string correct_reply = "Arduino Disconnected.";
-            //   reply = "{\n\"name\": \"" + correct_reply +"\0" + "\"\n}\n";
-              looping = 0;
-            }
-            count++;
-          }
-          
+        
+        if(returnVal == -1) {
+          cout << "Arduino failed" << endl;
+          string disconnect = "Arduino Disconnected!";
+          reply = "{\n\"name\": \"" + disconnect +"\0" + "\"\n}\n";
+          cout << "fd1 : " << fd1 << endl;
+          fd1 = open(argv[2], O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
+          cout << "fd1 after : " << fd1 << endl;
         }
+
         else {
           if(key == '1') {
             //Farenheit
@@ -191,6 +182,40 @@ int main(int argc, char *argv[]){
             //standby
             string print = "Entering Standby Mode";
             reply = "{\n\"name\": \"" + print +"\0" + "\"\n}\n";
+          }
+          else if(key == '7') {
+            string correct_reply;
+            int i = 0;
+            if(bytes_read < 0) {
+
+            }
+            else {
+                for(i = 0; i < bytes_read; i++) {
+                  correct_reply += buff[i] ;
+                }
+            }
+            
+            if(correct_reply == "") {
+              correct_reply = " ";
+            }
+            reply = "{\n\"name\": \"" + correct_reply +"\0" + "\"\n}\n";
+          }
+          else if(key == 'c') {
+            string correct_reply;
+            int i = 0;
+            if(bytes_read < 0) {
+
+            }
+            else {
+                for(i = 0; i < bytes_read; i++) {
+                  correct_reply += buff[i] ;
+                }
+            }
+            
+            if(correct_reply == "") {
+              correct_reply = " ";
+            }
+            reply = "{\n\"name\": \"" + correct_reply +"\0" + "\"\n}\n";
           }
           else if(key == '8') {
             //print some word to 7SEG
@@ -267,15 +292,18 @@ int main(int argc, char *argv[]){
 
             }
             else {
-              if(buff[0] == '\0' || buff[0] == ' ') {
-                correct_reply = "Click again";
-              }
-              else {
                 for(i = 0; i < bytes_read; i++) {
                   correct_reply += buff[i] ;
                 }
-              }
+                if(buff[2] != '.') {
+                  correct_reply = "Click Again";
+                }
             }
+
+            if(correct_reply == "") {
+                correct_reply = " ";
+            }
+
             reply = "{\n\"name\": \"" + correct_reply  +"\0" + "\"\n}\n";
             buff[0] = '\0';
           }
@@ -316,5 +344,3 @@ void* quitFunction(void* ptr){
 
     pthread_exit(ptr);
 }
-
-
