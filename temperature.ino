@@ -27,13 +27,13 @@ Change History:
 #define COLD (23)      /* Cold temperature, drive blue LED (23c) */
 #define HOT (26)       /* Hot temperature, drive red LED (27c) */
 
-bool interrupted = false;
 const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   0x6D,0x7D,0x07,0x7F,0x6F,
   0x77,0x7C,0x39,0x5E,0x79,0x71};
   // 0 1 2 3 4 5 6 7 8 9 A B C D E F
 
   /* Function prototypes */
+  double to_double (byte, int, bool);
   void convert_c_to_f (int&, byte&, bool&, int, byte, bool&);
   void Cal_temp (int&, byte&, byte&, bool&);
   void Dis_7SEG (int, byte, byte, bool);
@@ -162,36 +162,25 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         j = 3600;
       }
       // compute statistics
-      double current_temp = Temperature_H + ((double) Decimal / 1000.0);
+      double current_temp = to_double(Temperature_H, Decimal, IsPositive);
       temperature_double[j] = current_temp;
 
       double max_temp = -1000;
       double min_temp = 1000;
       double avg_temp = 0;
 
-      if (current_temp < min_temp) {
-        min_temp = current_temp;
-        min_index = index;
-      }
-      if (current_temp > max_temp) {
-        max_temp = current_temp;
-        max_index = index;
-      }
-      
-      avg_temp += current_temp;
-
-//       for (int i = 0; i < j; i++) {
-//        if (temperature_double[i] < min_temp) {
-//          min_temp = temperature_double[i];
-//          min_index = i; // for conversion
-//        }
-//        if (temperature_double[i] > max_temp) {
-//          max_temp = temperature_double[i];
-//          max_index = i; // for conversion
-//        }
-//         avg_temp += temperature_double[i];
-//       }
-//       avg_temp = (avg_temp / j);
+       for (int i = 0; i < j; i++) {
+        if (temperature_double[i] < min_temp) {
+          min_temp = temperature_double[i];
+          min_index = i; // for conversion
+        }
+        if (temperature_double[i] > max_temp) {
+          max_temp = temperature_double[i];
+          max_index = i; // for conversion
+        }
+         avg_temp += temperature_double[i];
+       }
+       avg_temp = (avg_temp / j);
 
       current_temp_f = convert_double_c_to_f(current_temp);
       max_temp_f = convert_double_c_to_f(max_temp);
@@ -225,14 +214,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       }
 
       if (Serial.available() > 0) {
-        if (interrupted == true) { // DC 4/25 testing
-          Serial.print("Reconnecting to Arduino.");
-          interrupted = false;
-        }
         char msg = Serial.read();
 
         if (msg == '0') { // display current temp
-          // TODO NOT WORKING
           if (!standby) {
             writing_word = false;
             blinking = false;
@@ -270,15 +254,13 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             showing_trend = false;
             if (celsius) {
               double test = avg_temp / array_index;
-              Serial.print(test);
-//               Serial.print(avg_temp);
+               Serial.print(avg_temp);
               Serial.print(" C.");
               continue;
             } else {
               double test = convert_double_c_to_f(avg_temp);
               test = (test / array_index);
-              Serial.print(test);
-//               Serial.print(avg_temp_f);
+               Serial.print(avg_temp_f);
               Serial.print(" F.");
               continue;
             }
@@ -554,19 +536,36 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           tooCold = 10;
           Serial.print(" ");
         }
-      } else {
-        interrupted = true;
       }
 
-//      if (celsius == true && writing_word == false) { // display in C
-//        Dis_7SEG(Decimal, Temperature_H, Temperature_L, IsPositive, 1);
-//      } else if (celsius == false && writing_word == false) { // display in F
-//        Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
-//      }
+      if (celsius == true && writing_word == false) { // display in C
+        Dis_7SEG(Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+      } else if (celsius == false && writing_word == false) { // display in F
+        Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+      }
 
       delay (1000);        /* Take temperature read every 1 second */
     }
   }
+
+  /***************************************************************************
+ Function Name: to_double
+
+ Purpose: 
+   Return temp as double
+****************************************************************************/
+double to_double (byte Temperature_H, int Decimal, bool IsPositive) {
+  double ans = 0;
+  if (Decimal < 1000) {
+    ans = Temperature_H + (Decimal / 1000.0);  
+  } else {
+    ans = Temperature_H + (Decimal / 10000.0);
+  }
+  if (!IsPositive) {
+    ans *= -1;
+  }
+  return ans;
+}
 
   /***************************************************************************
   Function Name: Word_7SEG
@@ -623,7 +622,12 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
   ****************************************************************************/
   void convert_c_to_f (int& f_decimal, byte& f_high, bool& f_sign, int c_decimal, byte c_high, bool& c_sign) {
     double deg_c, deg_f;
-    deg_c = c_high + ((double) c_decimal / 1000.0);
+
+    if (c_decimal < 1000) {
+      deg_c = c_high + (c_decimal / 1000.0);
+    } else {
+      deg_c = c_high + (c_decimal / 10000.0);
+    }
     if (c_sign == 0) { // negative temperature
       deg_c = - deg_c;
     }
@@ -780,19 +784,3 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       digitalWrite(GREEN, HIGH);
     }
   }
-
-  /***************************************************************************
-  Function Name: SerialMonitorPrint
-  Purpose:
-  Print current read temperature to the serial monitor.
-  ****************************************************************************/
-  //  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
-  //  {
-  //    if (!IsPositive)
-  //    {
-  //      Serial.print("-");
-  //    }
-  //    Serial.print(Temperature_H, DEC);
-  //    Serial.print(".");
-  //    Serial.print(Decimal, DEC);
-  //  }
