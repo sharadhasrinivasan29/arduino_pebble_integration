@@ -168,18 +168,29 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
       double min_temp = 1000;
       double avg_temp = 0;
 
-      for (int i = 0; i < j; i++) {
-        if (temperature_double[i] < min_temp) {
-          min_temp = temperature_double[i];
-          min_index = i; // for conversion
-        }
-        if (temperature_double[i] > max_temp) {
-          max_temp = temperature_double[i];
-          max_index = i; // for conversion
-        }
-        avg_temp += temperature_double[i];
+      if (current_temp < min_temp) {
+        min_temp = current_temp;
+        min_index = index;
       }
-      avg_temp = (avg_temp / j);
+      if (current_temp > max_temp) {
+        max_temp = current_temp;
+        max_index = index;
+      }
+      
+      avg_temp += current_temp;
+
+//       for (int i = 0; i < j; i++) {
+//        if (temperature_double[i] < min_temp) {
+//          min_temp = temperature_double[i];
+//          min_index = i; // for conversion
+//        }
+//        if (temperature_double[i] > max_temp) {
+//          max_temp = temperature_double[i];
+//          max_index = i; // for conversion
+//        }
+//         avg_temp += temperature_double[i];
+//       }
+//       avg_temp = (avg_temp / j);
 
       current_temp_f = convert_double_c_to_f(current_temp);
       max_temp_f = convert_double_c_to_f(max_temp);
@@ -255,11 +266,16 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             blinking = false;
             showing_trend = false;
             if (celsius) {
-              Serial.print(avg_temp);
+              double test = avg_temp / array_index;
+              Serial.print(test);
+//               Serial.print(avg_temp);
               Serial.print(" C.");
               continue;
             } else {
-              Serial.print(avg_temp_f);
+              double test = convert_double_c_to_f(avg_temp);
+              test = (test / array_index);
+              Serial.print(test);
+//               Serial.print(avg_temp_f);
               Serial.print(" F.");
               continue;
             }
@@ -317,7 +333,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           showing_trend = false;
           if (!standby) {
             if (celsius) {
-              Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 1);
+              Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
             } else {
               Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
             }
@@ -366,6 +382,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             writing_word = true;
             showing_trend = false;
             Word_7SEG(0, 1, 2, 3);
+            Serial.print(" ");
           }
         }
 
@@ -377,7 +394,14 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             writing_word = false;
             blinking = true;
             showing_trend = false;
-            int counter = 10;
+            
+            if (celsius) {
+              Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+            } else {
+              Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+            }
+            
+            int counter = 3;
             while (counter > 0) {
               digitalWrite(GREEN, HIGH);
               delay(1000);                       // wait for a second
@@ -396,12 +420,20 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             writing_word = false;
             blinking = true;
             showing_trend = false;
-            int counter = 10;
+            
+            if (celsius) {
+              Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+            } else {
+              Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+            }
+            
+            int counter = 3;
             while (counter > 0) {
               digitalWrite(BLUE, HIGH);
               delay(1000);                       // wait for a second
               digitalWrite(BLUE, LOW);
               delay(1000);                       // wait for a second
+              counter--;
             }
           }
         }
@@ -416,12 +448,20 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             writing_word = false;
             blinking = true;
             showing_trend = false;
-            int counter = 10;
+
+            if (celsius) {
+              Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+            } else {
+              Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
+            }
+            
+            int counter = 3;
             while (counter > 0) {
               digitalWrite(RED, HIGH);
               delay(1000);                       // wait for a second
               digitalWrite(RED, LOW);
               delay(1000);                       // wait for a second
+              counter--;
             }
           }
         }
@@ -430,16 +470,15 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
           showing_trend = false;
           writing_word = false;
           blinking = false;
-          if (tooHot == -1 || tooCold == -1) {
+          if (tooHot == -1 && tooCold == -1) {
             // error handling
-            //Serial.print("No preference found.");
-          }
-          if (Temperature_H >= tooHot){
-            //Serial.print("Have an iced tea!");
+            Serial.print("No preference found.");
+          } else if (Temperature_H >= tooHot){
+            Serial.print("Have an iced tea!");
           } else if (Temperature_H <= tooCold){
-            //Serial.print("Have a hot cocoa!");
+            Serial.print("Have a hot cocoa!");
           } else {
-            //Serial.print("Have a glass of water!");
+            Serial.print("Have a glass of water!");
           }
         }
 
@@ -449,6 +488,7 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             blinking = false;
             showing_trend = false;
             Word_7SEG(4, 5, 6, 0);
+            Serial.print(" ");
           }
         }
         if (msg == 'f') { // feature 2 word 3 Hola
@@ -457,38 +497,33 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
             blinking = false;
             showing_trend = false;
             Word_7SEG(4, 0, 11, 10);
+            Serial.print(" ");
           }
         }
-
         if (msg == 'g') {
           Serial.print(" ");
         }
-
         if (msg == 'h') { // 35
           showing_trend = false;
           writing_word = false;
           blinking = false;
           tooHot = 35;
         }
-
         if (msg == 'i') { // 30
           showing_trend = false;
           writing_word = false;
           blinking = false;
           tooHot = 30;
         }
-
         if (msg == 'j') { // 25
           writing_word = false;
           showing_trend = false;
           blinking = false;
           tooHot = 25;
         }
-
         if (msg == 'k') {
           Serial.print(" ");
         }
-
         if (msg == 'l') { // cold 0
           showing_trend = false;
           blinking = false;
@@ -509,18 +544,9 @@ const byte NumberLookup[16] =   {0x3F,0x06,0x5B,0x4F,0x66,
         }
       }
 
-      /* Display temperature on the 7-Segment */
-      if (standby == true) {
-        for (counter = 1; counter <= 4; counter++) {
-          Send7SEG(counter,0x40); // print ----
-          //          Wire.endTransmission();
-        }
-        delay(1000);
-      }
-
-      if (celsius == true && writing_word == false) { // DC : display in C
-        Dis_7SEG (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
-      } else if (celsius == false && writing_word == false) { // DC: display in F
+      if (celsius == true && writing_word == false) { // display in C
+        Dis_7SEGx (Decimal, Temperature_H, Temperature_L, IsPositive, 1);
+      } else if (celsius == false && writing_word == false) { // display in F
         Dis_7SEG(f_decimal * 10, f_temperature_H, f_temperature_L, f_IsPositive, 0);
       }
 
