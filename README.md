@@ -8,6 +8,7 @@ and display driven by an Arduino microcontroller.
 
 SYSTEM ARCHITECTURE
 The system shall consist of three major components, described as follows:
+
 • Sensor and Display: A Gravitech 7-Segment Shield will be attached to an
 Arduino microcontroller. This component includes a temperature sensor, a sevensegment
 display (like a digital clock), and an RGB light.
@@ -23,6 +24,7 @@ communicates with the middleware over the Internet via an Android or iOS phone.
 
 FUNCITONALITY
 Our system fulfills all of the following requirements:
+
 • The user is able to see the most recent temperature sensor reading.
 
 • The user is able to see the average, low, and high temperature sensor
