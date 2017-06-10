@@ -5,6 +5,7 @@ and display driven by an Arduino microcontroller.
 
 
 
+
 SYSTEM ARCHITECTURE
 The system shall consist of three major components, described as follows:
 • Sensor and Display: A Gravitech 7-Segment Shield will be attached to an
@@ -17,6 +18,7 @@ and the user interface.
 
 • User interface: The user interface is a Pebble smartwatch application, which
 communicates with the middleware over the Internet via an Android or iOS phone.
+
 
 
 FUNCITONALITY
