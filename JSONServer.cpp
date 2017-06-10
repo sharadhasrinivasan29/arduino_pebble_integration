@@ -75,12 +75,9 @@ int main(int argc, char *argv[]){
 
     configure(fd1);
     
-
-
     /*
     START SERVER FUNCTION
     */
-
 
     // structs to represent the server and client
     struct sockaddr_in server_addr,client_addr;    
@@ -196,7 +193,7 @@ int main(int argc, char *argv[]){
             }
             
             if(correct_reply == "") {
-              correct_reply = " ";
+              correct_reply = "Click Again";
             }
             reply = "{\n\"name\": \"" + correct_reply +"\0" + "\"\n}\n";
           }
@@ -213,7 +210,7 @@ int main(int argc, char *argv[]){
             }
             
             if(correct_reply == "") {
-              correct_reply = " ";
+              correct_reply = "Click Again";
             }
             reply = "{\n\"name\": \"" + correct_reply +"\0" + "\"\n}\n";
           }
@@ -344,3 +341,5 @@ void* quitFunction(void* ptr){
 
     pthread_exit(ptr);
 }
+
+
