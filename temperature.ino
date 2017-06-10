@@ -784,3 +784,19 @@ double to_double (byte Temperature_H, int Decimal, bool IsPositive) {
       digitalWrite(GREEN, HIGH);
     }
   }
+
+  /***************************************************************************
+  Function Name: SerialMonitorPrint
+  Purpose:
+  Print current read temperature to the serial monitor.
+  ****************************************************************************/
+  //  void SerialMonitorPrint (byte Temperature_H, int Decimal, bool IsPositive, bool isCelsius) // DC added bool parameter
+  //  {
+  //    if (!IsPositive)
+  //    {
+  //      Serial.print("-");
+  //    }
+  //    Serial.print(Temperature_H, DEC);
+  //    Serial.print(".");
+  //    Serial.print(Decimal, DEC);
+  //  }
